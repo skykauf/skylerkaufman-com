@@ -27,7 +27,7 @@ Use `.env.example` as reference:
 
 - `HF_TOKEN` (required) - Hugging Face access token
 - `HF_MODEL` (optional) - defaults to `meta-llama/Meta-Llama-3-8B-Instruct`
-- `HF_API_URL` (optional) - defaults to `https://router.huggingface.co`
+- `HF_API_URL` (optional) - defaults to `https://router.huggingface.co/v1` (router chat API; plain `https://router.huggingface.co` is auto-suffixed with `/v1`)
 - `DATABASE_URL` (optional) - enables `query_db` tool
 - `PORT` (local only)
 

@@ -5,7 +5,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "verify": "node -e \"require('./lib/chat-service'); console.log('verify: chat-service ok')\""
   },
   "dependencies": {
     "express": "^4.21.2",
