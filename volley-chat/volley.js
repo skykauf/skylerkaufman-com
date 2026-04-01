@@ -12,6 +12,29 @@
     statusEl.textContent = text || "";
   }
 
+  function formatErrorMessage(status, data, rawText) {
+    if (status === 404) {
+      return "Chat API route not found (/api/chat). Deploy latest code or run the local server with `npm start`.";
+    }
+    if (status === 401 || status === 403) {
+      return "Chat API auth failed. Check `HF_TOKEN` in project environment variables.";
+    }
+    if (status === 429) {
+      return "Rate limited by model provider. Wait a moment and try again.";
+    }
+    if (status >= 500) {
+      const detail = data?.detail || rawText;
+      if (detail && typeof detail === "string") {
+        return `Server error (${status}): ${detail.slice(0, 240)}`;
+      }
+      return `Server error (${status}). Check function logs for /api/chat.`;
+    }
+    if (typeof data?.error === "string") {
+      return `${data.error} (${status})`;
+    }
+    return `Request failed (${status}). Check env vars and deployment config.`;
+  }
+
   function appendBubble(role, content) {
     const div = document.createElement("div");
     div.className = `volley-msg ${role}`;
@@ -44,12 +67,16 @@
         body: JSON.stringify({ messages: history }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const rawText = await res.text();
+      let data = {};
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        data = {};
+      }
 
       if (!res.ok) {
-        const msg =
-          data.error ||
-          `Request failed (${res.status}). Is the site running with \`npm start\` and Ollama up?`;
+        const msg = formatErrorMessage(res.status, data, rawText);
         setStatus(msg);
         history.pop();
         thread.removeChild(thread.lastElementChild);
@@ -61,7 +88,7 @@
       appendBubble("assistant", reply);
       setStatus("");
     } catch (e) {
-      setStatus("Network error — is the server running?");
+      setStatus("Network error. Check internet connection or server availability.");
       history.pop();
       thread.removeChild(thread.lastElementChild);
     } finally {

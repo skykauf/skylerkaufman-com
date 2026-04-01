@@ -1,43 +1,49 @@
 # skylerkaufman.com
 
-Personal site with a canvas background, **Volley Chat** (local LLM via [Ollama](https://ollama.com)), and optional static hosting.
+Personal site with interactive visuals plus **Volley Chat**.  
+Chat now uses a hosted open-source LLM (Hugging Face Inference API) and includes a Postgres tool-calling skeleton (`query_db`) compatible with MCP-style patterns.
 
-## Local LLM (no external APIs)
+## Architecture
 
-Chat talks only to **Ollama** on the same machine (default `http://127.0.0.1:11434`). The app never calls OpenAI or other hosted LLM APIs.
+- Frontend: static pages (`/` and `/volley-chat/`)
+- Chat API:
+  - Local dev: `server.js` at `/api/chat`
+  - Vercel: `api/chat.js` serverless function
+- LLM: Hugging Face hosted OSS model (`HF_MODEL`)
+- Tool layer: optional Postgres query tool via `DATABASE_URL`
 
-1. Install and start Ollama, then pull a model (example):
-
-   ```bash
-   ollama pull llama3.2
-   ```
-
-2. Install dependencies and run the site + API:
-
-   ```bash
-   npm install
-   npm start
-   ```
-
-3. Open [http://localhost:3000](http://localhost:3000). Click the **ringed planet** (or go to `/volley-chat/`).
-
-Optional env (see `.env.example`):
-
-- `PORT` — server port (default `3000`)
-- `OLLAMA_URL` — Ollama base URL
-- `OLLAMA_MODEL` — model name (default `llama3.2`)
-
-## Deploying
-
-**Vercel (static only):** The default “static site” deploy serves HTML/CSS/JS but **not** `server.js` or `/api/chat`. Volley Chat needs a host where you run Node and Ollama together (your own VPS, homelab, etc.), or you drop the chat feature on pure static hosting.
-
-**Self‑hosted:** Run `npm start` behind a reverse proxy (e.g. Caddy or nginx), keep Ollama on localhost or a private URL only the Node app can reach.
-
-## Pure static on Vercel (original flow)
-
-1. Import the repo in Vercel, framework **Other**, output the repo root.
-2. Add your domain under **Settings → Domains** and set DNS at your registrar.
+## Quick start (local)
 
 ```bash
-npx vercel
+npm install
+npm start
 ```
+
+Open [http://localhost:3000](http://localhost:3000), then click the ringed **Volley Chat** planet.
+
+## Environment variables
+
+Use `.env.example` as reference:
+
+- `HF_TOKEN` (required) - Hugging Face access token
+- `HF_MODEL` (optional) - defaults to `meta-llama/Meta-Llama-3-8B-Instruct`
+- `HF_API_URL` (optional) - defaults to `https://api-inference.huggingface.co`
+- `DATABASE_URL` (optional) - enables `query_db` tool
+- `PORT` (local only)
+
+## Vercel deployment
+
+1. Import repo in Vercel.
+2. Add env vars (`HF_TOKEN`, optional `HF_MODEL`, optional `DATABASE_URL`).
+3. Deploy.
+
+The chat page calls `/api/chat`, which resolves to the Vercel function in production.
+
+## Notes on tool-calling
+
+The backend uses a lightweight MCP-style loop:
+1. LLM first pass can emit `{"tool":"query_db","sql":"..."}`.
+2. Backend validates read-only SQL and executes against Postgres.
+3. Tool result is fed back to the model for final response.
+
+For safety, only `SELECT`/`WITH` read-only SQL is allowed in this skeleton.
