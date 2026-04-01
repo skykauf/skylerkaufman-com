@@ -15,6 +15,8 @@
   let targetMy = 0;
   let raf = 0;
   let running = false;
+  let animT = 0;
+  let hoverProjectHref = null;
   const particles = [];
   const planets = [];
   const meteors = [];
@@ -101,6 +103,14 @@
     drawAurora(0);
   }
 
+  function redrawStaticScene() {
+    if (!reduced) return;
+    ctx.fillStyle = "#0a0a0c";
+    ctx.fillRect(0, 0, w, h);
+    drawStaticAurora();
+    drawPlanets(0);
+  }
+
   function initPlanets() {
     planets.length = 0;
     const s = Math.min(w, h);
@@ -128,6 +138,8 @@
       core: [70, 95, 118],
       edge: [28, 42, 52],
       rim: [130, 165, 188],
+      href: "/volley-chat/",
+      label: "Volley Chat",
     });
     planets.push({
       relX: 0.72,
@@ -155,14 +167,37 @@
     }
   }
 
-  function drawPlanets(t) {
+  function planetCenter(p, t) {
     const time = reduced ? 0 : t * 0.00012;
+    const ox = Math.sin(time + p.phase) * p.drift;
+    const oy = Math.cos(time * 0.85 + p.phase * 0.7) * p.drift * 0.6;
+    return { cx: p.relX * w + ox, cy: p.relY * h + oy };
+  }
 
+  function projectPlanetAt(clientX, clientY) {
+    const t = reduced ? 0 : animT;
     for (const p of planets) {
-      const ox = Math.sin(time + p.phase) * p.drift;
-      const oy = Math.cos(time * 0.85 + p.phase * 0.7) * p.drift * 0.6;
-      const cx = p.relX * w + ox;
-      const cy = p.relY * h + oy;
+      if (!p.href) continue;
+      const { cx, cy } = planetCenter(p, t);
+      const hitR = p.r * 1.38;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      if (dx * dx + dy * dy <= hitR * hitR) return p;
+    }
+    return null;
+  }
+
+  function drawPlanets(t) {
+    for (const p of planets) {
+      const { cx, cy } = planetCenter(p, t);
+
+      if (p.href && hoverProjectHref === p.href) {
+        ctx.strokeStyle = `rgba(${ACCENT.r}, ${ACCENT.g}, ${ACCENT.b}, 0.45)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, p.r * 1.22, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       const body = ctx.createRadialGradient(
         cx - p.r * 0.35,
@@ -223,6 +258,19 @@
       ctx.beginPath();
       ctx.arc(cx - p.r * 0.2, cy - p.r * 0.25, p.r * 0.12, 0, Math.PI * 2);
       ctx.fill();
+
+      if (p.label) {
+        ctx.save();
+        ctx.font = "600 10px system-ui, -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        const labelBright = hoverProjectHref === p.href;
+        ctx.fillStyle = labelBright
+          ? `rgba(${ACCENT.r}, ${ACCENT.g}, ${ACCENT.b}, 0.95)`
+          : `rgba(${ACCENT.r}, ${ACCENT.g}, ${ACCENT.b}, 0.72)`;
+        ctx.fillText(p.label.toUpperCase(), cx, cy + p.r + 10);
+        ctx.restore();
+      }
     }
   }
 
@@ -369,6 +417,8 @@
       return;
     }
 
+    animT = t;
+
     mx += (targetMx - mx) * 0.06;
     my += (targetMy - my) * 0.06;
 
@@ -399,16 +449,33 @@
   function onMove(e) {
     targetMx = e.clientX;
     targetMy = e.clientY;
+    const hit = projectPlanetAt(e.clientX, e.clientY);
+    const nextHref = hit?.href ?? null;
+    if (nextHref !== hoverProjectHref) {
+      hoverProjectHref = nextHref;
+      document.body.style.cursor = nextHref ? "pointer" : "";
+      if (reduced) redrawStaticScene();
+    }
   }
 
   function onLeave() {
     targetMx = w * 0.5;
     targetMy = h * 0.5;
+    hoverProjectHref = null;
+    document.body.style.cursor = "";
+  }
+
+  function onClick(e) {
+    const hit = projectPlanetAt(e.clientX, e.clientY);
+    if (hit?.href) {
+      window.location.href = hit.href;
+    }
   }
 
   window.addEventListener("resize", resize, { passive: true });
   window.addEventListener("pointermove", onMove, { passive: true });
   window.addEventListener("pointerleave", onLeave);
+  window.addEventListener("click", onClick);
 
   resize();
   targetMx = mx = w * 0.5;

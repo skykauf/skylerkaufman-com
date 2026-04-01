@@ -71,3 +71,14 @@ h1 {
   font-size: 1.05rem;
   color: var(--muted);
 }
+
+.lede.hint {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.92;
+}
+
+.lede.hint strong {
+  color: var(--accent);
+  font-weight: 600;
+}

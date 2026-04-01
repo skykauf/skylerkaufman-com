@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Volley Chat — Skyler Kaufman</title>
+    <meta name="description" content="Local LLM chat (Ollama)" />
+    <link rel="stylesheet" href="/volley-chat/volley.css" />
+  </head>
+  <body class="volley-page">
+    <header class="volley-header">
+      <a class="volley-back" href="/">← Home</a>
+      <h1 class="volley-title">Volley Chat</h1>
+      <p class="volley-sub">Runs on your machine via Ollama — no external LLM APIs.</p>
+    </header>
+
+    <main class="volley-main">
+      <div id="thread" class="volley-thread" aria-live="polite"></div>
+      <form id="composer" class="volley-composer">
+        <label class="volley-sr" for="input">Message</label>
+        <textarea
+          id="input"
+          class="volley-input"
+          rows="2"
+          placeholder="Message the local model…"
+          autocomplete="off"
+        ></textarea>
+        <button type="submit" class="volley-send" id="send">Send</button>
+      </form>
+      <p id="status" class="volley-status" role="status"></p>
+    </main>
+
+    <script src="/volley-chat/volley.js" defer></script>
+  </body>
+</html>
