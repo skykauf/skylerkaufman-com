@@ -16,6 +16,8 @@
   let raf = 0;
   let running = false;
   const particles = [];
+  const planets = [];
+  const meteors = [];
 
   const ACCENT = { r: 196, g: 165, b: 116 };
   const LINE_DIST = 118;
@@ -31,6 +33,8 @@
     canvas.style.height = `${h}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     initParticles();
+    initPlanets();
+    meteors.length = 0;
   }
 
   function initParticles() {
@@ -95,6 +99,208 @@
 
   function drawStaticAurora() {
     drawAurora(0);
+  }
+
+  function initPlanets() {
+    planets.length = 0;
+    const s = Math.min(w, h);
+    const small = w < 520;
+
+    planets.push({
+      relX: 0.1,
+      relY: 0.2,
+      r: s * (small ? 0.06 : 0.072),
+      drift: s * 0.012,
+      phase: 1.7,
+      ring: false,
+      core: [120, 90, 140],
+      edge: [55, 38, 72],
+      rim: [180, 160, 210],
+    });
+    planets.push({
+      relX: 0.88,
+      relY: 0.28,
+      r: s * (small ? 0.045 : 0.055),
+      drift: s * 0.009,
+      phase: 4.1,
+      ring: true,
+      tilt: 0.42,
+      core: [70, 95, 118],
+      edge: [28, 42, 52],
+      rim: [130, 165, 188],
+    });
+    planets.push({
+      relX: 0.72,
+      relY: 0.78,
+      r: s * (small ? 0.035 : 0.042),
+      drift: s * 0.015,
+      phase: 2.4,
+      ring: false,
+      core: [140, 100, 85],
+      edge: [72, 48, 38],
+      rim: [210, 170, 140],
+    });
+    if (!small) {
+      planets.push({
+        relX: 0.32,
+        relY: 0.72,
+        r: s * 0.028,
+        drift: s * 0.008,
+        phase: 5.2,
+        ring: false,
+        core: [90, 110, 130],
+        edge: [40, 52, 68],
+        rim: [150, 175, 195],
+      });
+    }
+  }
+
+  function drawPlanets(t) {
+    const time = reduced ? 0 : t * 0.00012;
+
+    for (const p of planets) {
+      const ox = Math.sin(time + p.phase) * p.drift;
+      const oy = Math.cos(time * 0.85 + p.phase * 0.7) * p.drift * 0.6;
+      const cx = p.relX * w + ox;
+      const cy = p.relY * h + oy;
+
+      const body = ctx.createRadialGradient(
+        cx - p.r * 0.35,
+        cy - p.r * 0.35,
+        0,
+        cx,
+        cy,
+        p.r
+      );
+      body.addColorStop(
+        0,
+        `rgba(${p.core[0]}, ${p.core[1]}, ${p.core[2]}, 0.95)`
+      );
+      body.addColorStop(
+        0.55,
+        `rgba(${p.edge[0]}, ${p.edge[1]}, ${p.edge[2]}, 0.88)`
+      );
+      body.addColorStop(
+        1,
+        `rgba(${p.edge[0] * 0.5}, ${p.edge[1] * 0.5}, ${p.edge[2] * 0.5}, 0)`
+      );
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.arc(cx, cy, p.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      const limb = ctx.createRadialGradient(cx, cy, p.r * 0.65, cx, cy, p.r * 1.35);
+      limb.addColorStop(0, "rgba(255,255,255,0)");
+      limb.addColorStop(
+        0.88,
+        `rgba(${p.rim[0]}, ${p.rim[1]}, ${p.rim[2]}, 0.22)`
+      );
+      limb.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = limb;
+      ctx.beginPath();
+      ctx.arc(cx, cy, p.r * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (p.ring) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(p.tilt);
+        ctx.scale(1, 0.22);
+        ctx.strokeStyle = `rgba(${p.rim[0]}, ${p.rim[1]}, ${p.rim[2]}, 0.35)`;
+        ctx.lineWidth = p.r * 0.09;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r * 1.55, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255,255,255,0.06)`;
+        ctx.lineWidth = p.r * 0.04;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r * 1.42, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.fillStyle = `rgba(${ACCENT.r}, ${ACCENT.g}, ${ACCENT.b}, 0.12)`;
+      ctx.beginPath();
+      ctx.arc(cx - p.r * 0.2, cy - p.r * 0.25, p.r * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function spawnMeteor() {
+    const fromTop = Math.random() > 0.28;
+    let x;
+    let y;
+    let vx;
+    let vy;
+    const speed = 11 + Math.random() * 14;
+
+    if (fromTop) {
+      x = Math.random() * (w + 160) - 80;
+      y = -30 - Math.random() * 120;
+      const spread = 0.35 + Math.random() * 0.55;
+      vx = Math.cos(spread) * speed;
+      vy = Math.sin(spread) * speed;
+    } else {
+      x = -40 - Math.random() * 100;
+      y = Math.random() * h * 0.55;
+      vx = speed * (0.85 + Math.random() * 0.2);
+      vy = 2 + Math.random() * 5;
+    }
+
+    meteors.push({
+      x,
+      y,
+      vx,
+      vy,
+      life: 1,
+      len: 70 + Math.random() * 100,
+    });
+  }
+
+  function stepMeteors() {
+    if (Math.random() < 0.007) spawnMeteor();
+
+    for (let i = meteors.length - 1; i >= 0; i--) {
+      const m = meteors[i];
+      m.x += m.vx;
+      m.y += m.vy;
+      m.life -= 0.014;
+      if (m.life <= 0 || m.x > w + 120 || m.y > h + 120) {
+        meteors.splice(i, 1);
+      }
+    }
+  }
+
+  function drawMeteors() {
+    for (const m of meteors) {
+      const spd = Math.hypot(m.vx, m.vy) || 1;
+      const nx = -m.vx / spd;
+      const ny = -m.vy / spd;
+      const tail = m.len * Math.max(0.15, m.life);
+      const x1 = m.x;
+      const y1 = m.y;
+      const x0 = x1 + nx * tail;
+      const y0 = y1 + ny * tail;
+
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(0.55, `rgba(${ACCENT.r}, ${ACCENT.g}, ${ACCENT.b}, ${0.15 * m.life})`);
+      g.addColorStop(0.92, `rgba(230,235,255,${0.55 * m.life})`);
+      g.addColorStop(1, `rgba(255,255,255,${0.95 * m.life})`);
+
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1.1 + m.life * 0.8;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(255,255,255,${0.55 * m.life})`;
+      ctx.beginPath();
+      ctx.arc(x1, y1, 1.1 + m.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   function stepParticles() {
@@ -169,8 +375,11 @@
     ctx.fillStyle = "#0a0a0c";
     ctx.fillRect(0, 0, w, h);
     drawAurora(t);
+    drawPlanets(t);
     stepParticles();
     drawNetwork();
+    stepMeteors();
+    drawMeteors();
 
     raf = requestAnimationFrame(frame);
   }
@@ -209,6 +418,7 @@
     ctx.fillStyle = "#0a0a0c";
     ctx.fillRect(0, 0, w, h);
     drawStaticAurora();
+    drawPlanets(0);
   } else {
     startLoop();
   }
