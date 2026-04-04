@@ -6,3 +6,8 @@
 .env.*.local
 !.env.example
 node_modules/
+
+# FIVB dbt artifacts (local runs)
+fivb-pipeline/target/
+fivb-pipeline/dbt_packages/
+fivb-pipeline/logs/

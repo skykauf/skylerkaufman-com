@@ -6,7 +6,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "verify": "node -e \"require('./lib/chat-service'); console.log('verify: chat-service ok')\""
+    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); console.log('verify: ok')\""
   },
   "dependencies": {
     "express": "^4.21.2",

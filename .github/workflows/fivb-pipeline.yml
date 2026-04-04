@@ -1,0 +1,50 @@
+# Full FIVB pipeline: VIS ETL -> dbt models -> Elo tables -> Supabase Postgres.
+# Scheduled daily. GitHub-hosted runners cannot read Vercel project env; add the same
+# DATABASE_URL you use on Vercel under Repo Settings -> Secrets and variables -> Actions.
+
+name: FIVB pipeline (Supabase)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+concurrency:
+  group: fivb-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: fivb-pipeline
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require DATABASE_URL secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add repository secret DATABASE_URL (same Supabase Postgres URL as on Vercel). GitHub Actions cannot pull environment variables from your Vercel project automatically."
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: fivb-pipeline/requirements-cron.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-cron.txt
+
+      - name: Run pipeline
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python run_full_pipeline.py

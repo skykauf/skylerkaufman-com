@@ -1,0 +1,96 @@
+# Core layer: dimensions and facts with derived fields
+version: 2
+models:
+  - name: dim_tournaments
+    description: "Tournaments with derived fields (duration, season year, is_major)."
+    columns:
+      - name: tournament_id
+        description: "Unique tournament number (VIS No)."
+        tests:
+          - dbt_utils.at_least_one
+      - name: duration_days
+        description: "Tournament length in days (end_date - start_date + 1)."
+      - name: season_year
+        description: "Numeric season year parsed from season text."
+      - name: is_major
+        description: "True for World Championship or Olympic Games."
+
+  - name: dim_team_tournaments
+    description: "Team at a tournament with both player names and tournament context."
+    columns:
+      - name: team_id
+        description: "Team number for this tournament (VIS No)."
+        tests:
+          - dbt_utils.at_least_one
+      - name: tournament_id
+      - name: team_display_name
+        description: "Derived: 'Player A / Player B' for display."
+      - name: player_a_name
+      - name: player_b_name
+      - name: player_a_height_inches
+        description: "Player A height in inches (from stg_fivb_players)."
+      - name: player_b_height_inches
+        description: "Player B height in inches (from stg_fivb_players)."
+
+  - name: fct_matches
+    description: "Match-level fact with tournament, round, team display names and derived flags. Use match_date for time ordering (played_at is rarely populated)."
+    columns:
+      - name: match_id
+        tests:
+          - dbt_utils.at_least_one
+      - name: tournament_id
+      - name: played_at
+        description: "Match timestamp when available; rarely populated in source."
+      - name: round_start_date
+        description: "Round start date from stg_fivb_rounds (when round has dates)."
+      - name: match_date
+        description: "Canonical match date: COALESCE(played_at, round_start_date, tournament_start_date). Use for ordering and as-of semantics."
+      - name: is_winner_team1
+        description: "True when team1 won the match."
+      - name: is_final
+        description: "True for final / gold medal match."
+      - name: is_pool_phase
+        description: "True for pool play rounds. Derived from round.phase (match.phase is nearly always null in raw)."
+      - name: team1_ranking_position
+        description: "Team1 world ranking position as of match date (null if not ranked)."
+      - name: team2_ranking_position
+        description: "Team2 world ranking position as of match date (null if not ranked)."
+      - name: higher_seed_won
+        description: "True when the team with the better (lower) world ranking position won the match; null if either team has no ranking or there is no winner."
+
+  - name: fct_tournament_standings
+    description: "Tournament finishing positions with tournament and team context."
+    columns:
+      - name: tournament_id
+        tests:
+          - dbt_utils.at_least_one
+      - name: team_id
+      - name: finishing_pos
+      - name: points
+        description: "Points earned at this tournament (from GetBeachTournamentRanking EarnedPointsTeam). Null when API does not populate."
+      - name: prize_money
+        description: "Prize/earnings for this finish (from GetBeachTournamentRanking EarningsTotalTeam). Null when API does not populate."
+      - name: entry_ranking_position
+        description: "Team's World Tour ranking position as of tournament start (for seeding context). Null when no ranking snapshot exists on or before tournament start (ETL only loads rankings for snapshot_date = today)."
+      - name: entry_ranking_points
+        description: "Team's World Tour earned points as of tournament start (entry seeding). Null for same reason as entry_ranking_position."
+      - name: entry_ranking_snapshot_date
+        description: "Date of the ranking snapshot used for entry_ranking_*. Null when no snapshot on or before tournament start."
+      - name: is_podium
+        description: "True when finishing_pos <= 3."
+      - name: is_champion
+        description: "True when finishing_pos = 1."
+
+  - name: fct_team_rankings
+    description: "World Tour / Olympic selection rankings with player names and derived flags."
+    columns:
+      - name: ranking_type
+        tests:
+          - dbt_utils.at_least_one
+      - name: snapshot_date
+      - name: position
+      - name: earned_points
+        description: "Cumulative points (World Tour: EarnedPointsTeam; Olympic: Points)."
+      - name: is_top_10
+      - name: is_top_16
+        description: "Relevant for Olympic qualification cutoffs."

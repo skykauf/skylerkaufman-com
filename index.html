@@ -20,5 +20,10 @@
       </p>
     </main>
     <script src="/visuals.js" defer></script>
+    <script>
+      fetch("/api/bootstrap-supabase", { method: "GET", credentials: "same-origin" }).catch(
+        function () {}
+      );
+    </script>
   </body>
 </html>
