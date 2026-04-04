@@ -56,13 +56,25 @@ With **`DATABASE_URL`** set on Vercel, the home page triggers **`GET /api/bootst
 
 The **`fivb-pipeline/`** directory is the full ingest and modeling stack ported from the **fivb-leaderboard** project (VIS ETL, dbt staging/core/mart views, player Elo). It writes into **Postgres** (`raw`, `staging`, `core`, `mart`).
 
-### Why GitHub Actions?
+### Why Vercel triggers GitHub Actions?
 
-The job pulls the full VIS dataset, runs **dbt**, and recomputes Elo. That routinely exceeds Vercel serverless time limits, so **`.github/workflows/fivb-pipeline.yml`** runs on a **schedule** (`0 6 * * *` UTC) on GitHub-hosted runners.
+The full run can take **on the order of an hour** (VIS ingest, `dbt`, Elo). That does not fit Vercel serverless limits, so **Vercel only schedules a tiny function** that **dispatches** **`.github/workflows/fivb-pipeline.yml`** on GitHub. The workflow runs on **`ubuntu-latest`** with a **180-minute** timeout.
 
-### Connecting GitHub Actions to Supabase
+### Daily schedule (Vercel → GitHub)
 
-GitHub’s runners **cannot read** your Vercel project environment variables. There is no supported way to “inject” Vercel env into a scheduled workflow without storing credentials on GitHub. Add a single repository secret **`DATABASE_URL`** (**Settings → Secrets and variables → Actions**) using the **same** Supabase Postgres URL as on Vercel (prefer the **direct** connection on port **5432** for long `dbt` runs; include **`?sslmode=require`** if your provider expects it). The workflow fails early with a clear error if this secret is missing.
+**`vercel.json`** runs **`/api/trigger-fivb-pipeline`** daily at **06:00 UTC**. That handler (with **`Authorization: Bearer $CRON_SECRET`**) calls GitHub’s API to start **`workflow_dispatch`** on **`fivb-pipeline.yml`**, passing your **`DATABASE_URL`** from Vercel as the workflow input **`database_url`**. You do **not** need a **`DATABASE_URL`** repository secret on GitHub for that path.
+
+**Vercel environment variables:**
+
+| Variable | Purpose |
+|----------|---------|
+| **`DATABASE_URL`** | Same Supabase/Postgres URL as the rest of the site (prefer direct **5432** for long `dbt` runs; add **`?sslmode=require`** if needed). |
+| **`CRON_SECRET`** | Random string; Vercel sends it as `Authorization: Bearer …` on cron invocations. |
+| **`GITHUB_PAT`** | Personal access token able to dispatch Actions (classic: **`repo`** + **`workflow`**; or fine-grained: **Actions: Read and write** on this repo). Alias: **`GITHUB_ACTIONS_DISPATCH_TOKEN`**. |
+| **`GITHUB_REPO`** | Optional. Default **`skykauf/skylerkaufman-com`**. |
+| **`GITHUB_DISPATCH_REF`** | Optional. Default **`main`**. |
+
+**Security note:** The connection string is sent to GitHub as a **workflow input** and may appear in the Actions run UI for that job. Use a **private** repository and avoid sharing run links if that is a concern. Alternatively, leave the Vercel input empty and use only a **`DATABASE_URL`** **repository secret** when starting the workflow from the Actions tab.
 
 ### Manual / local run
 

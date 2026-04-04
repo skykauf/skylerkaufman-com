@@ -1,13 +1,20 @@
 # Full FIVB pipeline: VIS ETL -> dbt models -> Elo tables -> Supabase Postgres.
-# Scheduled daily. GitHub-hosted runners cannot read Vercel project env; add the same
-# DATABASE_URL you use on Vercel under Repo Settings -> Secrets and variables -> Actions.
+# Intended to run on GitHub-hosted runners (long timeout). Vercel cron calls
+# api/trigger-fivb-pipeline, which dispatches this workflow with database_url
+# from Vercel env (no DATABASE_URL secret required on GitHub for that path).
+#
+# Optional: set repository secret DATABASE_URL and run from Actions UI without
+# pasting the URL, or re-add a schedule block that uses the secret only.
 
 name: FIVB pipeline (Supabase)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * *"
+    inputs:
+      database_url:
+        description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
+        required: false
+        type: string
 
 concurrency:
   group: fivb-pipeline
@@ -16,7 +23,9 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
+    env:
+      DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
     defaults:
       run:
         working-directory: fivb-pipeline
@@ -25,12 +34,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require DATABASE_URL secret
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Mask DATABASE_URL in logs
+        run: echo "::add-mask::${DATABASE_URL}"
+
+      - name: Require DATABASE_URL
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::Add repository secret DATABASE_URL (same Supabase Postgres URL as on Vercel). GitHub Actions cannot pull environment variables from your Vercel project automatically."
+            echo "::error::No DATABASE_URL. Use the Vercel trigger (passes workflow input), or set repository secret DATABASE_URL and run workflow_dispatch with an empty input."
             exit 1
           fi
 
@@ -45,6 +55,4 @@ jobs:
         run: pip install -r requirements-cron.txt
 
       - name: Run pipeline
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: python run_full_pipeline.py
