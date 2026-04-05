@@ -702,28 +702,21 @@ def _load_one_tournament(
     limits: IngestionLimits,
 ) -> Tuple[int, Optional[Exception], Dict[str, float]]:
     """Load results and rounds for one tournament (matches loaded in bulk in step 5a).
-    Runs the 4 API calls (3 ranking phases + rounds) in parallel within this task.
-    Returns (tournament_id, error_or_none, timings_sec) with keys: results, rounds."""
+
+    Ranking phases (Qualification / MainDraw / default) must not upsert raw_fivb_results in
+    parallel: concurrent ON CONFLICT on the same table deadlocks easily. Rounds use a
+    different raw table and run after results.
+    """
     timings: Dict[str, float] = {"results": 0.0, "rounds": 0.0}
     try:
         t0 = time.perf_counter()
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(
-                    _fetch_and_upsert_results_phase,
-                    engine,
-                    no_int,
-                    phase,
-                    limits.results_per_tournament,
-                )
-                for phase in (None, "MainDraw", "Qualification")
-            ]
-            futures.append(executor.submit(load_rounds_for_tournament, engine, no_int))
-            for fut in futures:
-                fut.result()
-        elapsed = time.perf_counter() - t0
-        timings["results"] = elapsed * 0.5  # approximate split for reporting
-        timings["rounds"] = elapsed * 0.5
+        t_results = time.perf_counter()
+        load_results_for_tournament(engine, no_int, limits.results_per_tournament)
+        timings["results"] = time.perf_counter() - t_results
+        t_rounds = time.perf_counter()
+        load_rounds_for_tournament(engine, no_int)
+        timings["rounds"] = time.perf_counter() - t_rounds
+        _ = time.perf_counter() - t0
         return (no_int, None, timings)
     except Exception as e:
         return (no_int, e, timings)

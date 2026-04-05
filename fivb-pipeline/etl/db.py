@@ -1,12 +1,22 @@
 from __future__ import annotations
 
 import json
+import random
+import time
 from typing import Any, Iterable, Mapping
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import DBAPIError
 
 from .config import get_db_config
+
+_PG_DEADLOCK_SQLSTATE = "40P01"
+_BULK_UPSERT_DEADLOCK_RETRIES = 6
+
+
+def _is_pg_deadlock(exc: BaseException | None) -> bool:
+    return exc is not None and getattr(exc, "pgcode", None) == _PG_DEADLOCK_SQLSTATE
 
 
 def get_engine() -> Engine:
@@ -359,6 +369,8 @@ def bulk_upsert(
     rows = list(rows)
     if not rows:
         return
+    # Stable lock order within the statement (reduces deadlocks under concurrent writers).
+    rows.sort(key=lambda r: tuple((r.get(c) is None, r.get(c)) for c in conflict_columns))
     columns = sorted(rows[0].keys())
     conflict_set = set(conflict_columns)
     update_columns = [c for c in columns if c not in conflict_set]
@@ -374,5 +386,15 @@ def bulk_upsert(
         f"ON CONFLICT ({conflict_list}) DO UPDATE SET {set_clause}"
     )
     serialized = [{k: _serialize_for_db(v) for k, v in row.items()} for row in rows]
-    with engine.begin() as conn:
-        conn.execute(sql, serialized)
+    delay = 0.04
+    for attempt in range(_BULK_UPSERT_DEADLOCK_RETRIES):
+        try:
+            with engine.begin() as conn:
+                conn.execute(sql, serialized)
+            return
+        except DBAPIError as e:
+            if _is_pg_deadlock(getattr(e, "orig", None)) and attempt < _BULK_UPSERT_DEADLOCK_RETRIES - 1:
+                time.sleep(delay + random.random() * delay)
+                delay = min(delay * 2, 1.5)
+                continue
+            raise
