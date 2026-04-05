@@ -24,4 +24,7 @@ def get_db_config() -> DbConfig:
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("DATABASE_URL must be set in environment.")
+    url = url.strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
     return DbConfig(url=url)

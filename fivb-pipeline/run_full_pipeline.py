@@ -21,6 +21,10 @@ def _normalize_database_url() -> None:
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise SystemExit("DATABASE_URL is required")
+    url = url.strip()
+    # Vercel/Heroku-style URIs use postgres://; SQLAlchemy only registers postgresql://
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
 
     # dbt profile reads PGHOST / DB_PASSWORD / etc.
     raw = url.replace("postgresql+psycopg2://", "postgresql://", 1)
