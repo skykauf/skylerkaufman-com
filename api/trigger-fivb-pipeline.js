@@ -4,13 +4,15 @@
  *
  * Vercel env:
  *   CRON_SECRET              – required; Vercel sends Authorization: Bearer … on cron
- *   DATABASE_URL             – Supabase/Postgres URL (same as rest of the site)
+ *   DATABASE_URL             – Postgres URI (see lib/resolve-database-url.js for aliases). Not the Supabase anon/service_role keys.
  *   GITHUB_PAT               – classic PAT with repo + workflow, or fine-grained with Actions: write
  *   GITHUB_REPO              – optional, default skykauf/skylerkaufman-com
  *   GITHUB_DISPATCH_REF      – optional, default main
  *
  * GITHUB_ACTIONS_DISPATCH_TOKEN is accepted as an alias for GITHUB_PAT.
  */
+
+const { resolveDatabaseUrl } = require("../lib/resolve-database-url");
 
 module.exports = async function handler(req, res) {
   try {
@@ -37,7 +39,7 @@ module.exports = async function handler(req, res) {
 
     const pat = process.env.GITHUB_PAT || process.env.GITHUB_ACTIONS_DISPATCH_TOKEN;
     const repo = (process.env.GITHUB_REPO || "skykauf/skylerkaufman-com").trim();
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = resolveDatabaseUrl();
 
     if (!pat) {
       console.error("[trigger-fivb-pipeline] GITHUB_PAT (or GITHUB_ACTIONS_DISPATCH_TOKEN) is not set.");
@@ -45,10 +47,13 @@ module.exports = async function handler(req, res) {
         error: "Set GITHUB_PAT (or GITHUB_ACTIONS_DISPATCH_TOKEN) with permission to dispatch workflows.",
       });
     }
-    if (!databaseUrl || String(databaseUrl).trim() === "") {
-      console.error("[trigger-fivb-pipeline] DATABASE_URL is not set.");
+    if (!databaseUrl) {
+      console.error(
+        "[trigger-fivb-pipeline] No Postgres URL: set DATABASE_URL (Supabase → Settings → Database → URI), or POSTGRES_URL / SUPABASE_DB_* — not anon or service_role keys."
+      );
       return res.status(503).json({
-        error: "DATABASE_URL must be set on Vercel so it can be forwarded to the workflow run.",
+        error:
+          "Postgres connection string missing. In Supabase: Project Settings → Database → Connection string (URI). Add as DATABASE_URL on Vercel (API keys are not the database URL).",
       });
     }
 
