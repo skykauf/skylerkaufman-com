@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from etl.libpq_url import normalize_postgres_scheme, strip_unknown_libpq_query_params
+
 ROOT = Path(__file__).resolve().parent
 
 
@@ -21,10 +23,9 @@ def _normalize_database_url() -> None:
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise SystemExit("DATABASE_URL is required")
-    url = url.strip()
-    # Vercel/Heroku-style URIs use postgres://; SQLAlchemy only registers postgresql://
-    if url.startswith("postgres://"):
-        url = "postgresql://" + url[len("postgres://") :]
+    url = normalize_postgres_scheme(url.strip())
+    # Drop pooler/dashboard query keys libpq/psycopg2 reject (e.g. non-standard ?foo=…)
+    url = strip_unknown_libpq_query_params(url)
 
     # dbt profile reads PGHOST / DB_PASSWORD / etc.
     raw = url.replace("postgresql+psycopg2://", "postgresql://", 1)

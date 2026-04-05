@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from .libpq_url import normalize_postgres_scheme, strip_unknown_libpq_query_params
+
 
 load_dotenv()
 
@@ -24,7 +26,6 @@ def get_db_config() -> DbConfig:
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("DATABASE_URL must be set in environment.")
-    url = url.strip()
-    if url.startswith("postgres://"):
-        url = "postgresql://" + url[len("postgres://") :]
+    url = normalize_postgres_scheme(url.strip())
+    url = strip_unknown_libpq_query_params(url)
     return DbConfig(url=url)
