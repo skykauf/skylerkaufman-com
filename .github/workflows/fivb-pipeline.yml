@@ -23,9 +23,11 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     env:
+      PYTHONUNBUFFERED: "1"
       DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+      ETL_MAX_WORKERS: "12"
     defaults:
       run:
         working-directory: fivb-pipeline

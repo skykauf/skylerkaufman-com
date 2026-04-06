@@ -559,17 +559,16 @@ def _clear_rounds_empty(engine: Engine, tournament_id: int) -> None:
         )
 
 
-def _fetch_and_upsert_results_phase(
-    engine: Engine,
+def _fetch_results_phase_rows(
     no_tournament: int,
     phase: Optional[str],
     limit: int | None,
-) -> bool:
-    """Single phase of GetBeachTournamentRanking: fetch + normalize + upsert. Returns True if we wrote any rows."""
+) -> List[Dict[str, Any]]:
+    """Single phase of GetBeachTournamentRanking: fetch + normalize, no DB writes."""
     try:
         data = fetch_beach_tournament_ranking(no_tournament, phase=phase)
     except Exception:
-        return False
+        return []
     valid = [
         r for r in data
         if isinstance(r, dict) and "Errors" not in r and (r.get("Rank") is not None or r.get("Position") is not None)
@@ -578,25 +577,35 @@ def _fetch_and_upsert_results_phase(
         valid = valid[: max(1, limit)]
     rows = [_normalize_result(no_tournament, r) for r in valid]
     rows = [r for r in rows if r.get("team_id") is not None]
-    if rows:
-        bulk_upsert(
-            engine,
-            "raw.raw_fivb_results",
-            rows,
-            RAW_CONFLICT_COLUMNS["raw.raw_fivb_results"],
-        )
-        return True
-    return False
+    return rows
 
 
 def load_results_for_tournament(
     engine: Engine, no_tournament: int, limit: int | None = None
 ) -> None:
-    """GetBeachTournamentRanking (Qualification + MainDraw) -> raw_fivb_results."""
-    any_wrote = False
-    for phase in (None, "MainDraw", "Qualification"):
-        any_wrote |= _fetch_and_upsert_results_phase(engine, no_tournament, phase, limit)
-    if any_wrote:
+    """GetBeachTournamentRanking (Qualification + MainDraw) -> raw_fivb_results.
+
+    Fetch phases in parallel for speed, then write once to avoid concurrent upserts.
+    """
+    phases: Tuple[Optional[str], ...] = (None, "MainDraw", "Qualification")
+    with ThreadPoolExecutor(max_workers=len(phases)) as executor:
+        phase_rows = list(
+            executor.map(lambda p: _fetch_results_phase_rows(no_tournament, p, limit), phases)
+        )
+
+    merged: Dict[Tuple[int | None, int | None], Dict[str, Any]] = {}
+    for rows in phase_rows:
+        for row in rows:
+            merged[(row.get("tournament_id"), row.get("team_id"))] = row
+
+    final_rows = list(merged.values())
+    if final_rows:
+        bulk_upsert(
+            engine,
+            "raw.raw_fivb_results",
+            final_rows,
+            RAW_CONFLICT_COLUMNS["raw.raw_fivb_results"],
+        )
         _clear_results_empty(engine, no_tournament)
     else:
         _record_results_empty(engine, no_tournament)
