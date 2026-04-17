@@ -2,8 +2,7 @@
   const statusEl = document.getElementById("status");
   const historyForm = document.getElementById("historyForm");
   const playerProfileEl = document.getElementById("playerProfile");
-  const matchesEl = document.getElementById("matches");
-  const eloEl = document.getElementById("elo");
+  const timelineEl = document.getElementById("timeline");
 
   const historyPlayerIdEl = document.getElementById("historyPlayerId");
   const historyPlayerNameEl = document.getElementById("historyPlayerName");
@@ -100,31 +99,23 @@
       }
 
       renderTable(
-        matchesEl,
+        timelineEl,
         [
-          { key: "match_id", label: "Match ID", format: (v) => fmtNum(v) },
+          { key: "match_id", label: "Match ID", format: (v) => esc(v) },
           { key: "local_date", label: "Local Date", format: (v) => fmtDate(v) },
+          { key: "as_of_date", label: "ELO As Of", format: (v) => fmtDate(v) },
           { key: "tournament_name", label: "Tournament" },
           { key: "round_name", label: "Round" },
           { key: "team_a_name", label: "Team A" },
           { key: "team_b_name", label: "Team B" },
           { key: "score_sets", label: "Score" },
-        ],
-        out.matches
-      );
-
-      renderTable(
-        eloEl,
-        [
-          { key: "as_of_date", label: "As Of", format: (v) => fmtDate(v) },
-          { key: "match_id", label: "Match ID", format: (v) => fmtNum(v) },
           { key: "elo_rating", label: "ELO" },
-          { key: "gender", label: "Gender", format: (v) => fmtGender(v) },
+          { key: "elo_gender", label: "ELO Gender", format: (v) => fmtGender(v) },
         ],
-        out.elo_history
+        out.timeline
       );
 
-      statusEl.textContent = `Loaded ${out.matches.length} matches and ${out.elo_history.length} ELO rows.`;
+      statusEl.textContent = `Loaded ${out.timeline.length} timeline rows.`;
     } catch (err) {
       statusEl.textContent = err.message || String(err);
     }
