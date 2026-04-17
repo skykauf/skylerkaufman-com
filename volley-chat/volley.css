@@ -101,6 +101,20 @@ body.volley-page {
   cursor: pointer;
 }
 
+.volley-auth-btn.google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.volley-google-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+}
+
 .volley-auth-btn.secondary {
   border-color: var(--border);
   color: var(--muted);
