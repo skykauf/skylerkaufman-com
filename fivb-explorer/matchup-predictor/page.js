@@ -10,7 +10,6 @@
     b1: document.getElementById("playerB1"),
     b2: document.getElementById("playerB2"),
     genderPool: document.getElementById("genderPool"),
-    recentWindow: document.getElementById("recentWindow"),
   };
 
   const playerCache = new Map();
@@ -705,7 +704,7 @@
 
     try {
       const calibration = await getCalibration();
-      const recentWindow = clamp(toNum(fields.recentWindow.value, 12), 3, 40);
+      const recentWindow = 12;
       const genderPool = fields.genderPool?.value || "0";
       const pA1 = await resolvePlayer(fields.a1.value, genderPool);
       const pA2 = await resolvePlayer(fields.a2.value, genderPool);
