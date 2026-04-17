@@ -486,4 +486,7 @@
 
   predictFormEl?.addEventListener("submit", runPrediction);
   bindSuggestionInputs();
+  if (predictFormEl) {
+    runPrediction({ preventDefault() {} });
+  }
 })();
