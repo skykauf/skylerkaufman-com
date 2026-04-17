@@ -19,12 +19,17 @@ module.exports = async function handler(req, res) {
       writeEvent({ type: "start" });
       const result = await generateChatReply(req.body?.messages, {
         onProgress: (evt) => writeEvent(evt),
+        clientContext: req.body?.client_context || {},
+        responseStyle: req.body?.response_style || "balanced",
       });
       writeEvent({ type: "final", status: result.status, body: result.body });
       return res.end();
     }
 
-    const result = await generateChatReply(req.body?.messages);
+    const result = await generateChatReply(req.body?.messages, {
+      clientContext: req.body?.client_context || {},
+      responseStyle: req.body?.response_style || "balanced",
+    });
     return res.status(result.status).json(result.body);
   } catch (err) {
     if (req.body?.stream) {

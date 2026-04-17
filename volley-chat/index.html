@@ -13,6 +13,16 @@
       <h1 class="volley-title">Volley Chat</h1>
       <p class="volley-sub">Uses a hosted open-source LLM with optional Postgres tool access.</p>
       <p class="volley-model-meta">Model: <span id="modelMeta" class="volley-model-pill">Detecting…</span></p>
+      <div class="volley-controls-row">
+        <label class="volley-style-label" for="responseStyle">Style</label>
+        <select id="responseStyle" class="volley-style-select">
+          <option value="balanced">Balanced</option>
+          <option value="brief">Brief</option>
+          <option value="table">Table</option>
+          <option value="scout">Scout report</option>
+        </select>
+      </div>
+      <div id="contextBar" class="volley-context-bar"></div>
     </header>
 
     <main class="volley-main">

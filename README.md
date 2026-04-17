@@ -71,6 +71,11 @@ OpenAI is used first when `OPENAI_API_KEY` is set; otherwise the app falls back 
 
 For safety, only `SELECT`/`WITH` read-only SQL is allowed in this skeleton.
 
+Conversation UX notes:
+- The chat sends `client_context` so entities (player/country/tournament) can persist across follow-ups.
+- Users can pick a response style (`balanced`, `brief`, `table`, `scout`) from the UI.
+- Tool progress events include previews and timing; assistant replies include latency + confidence/freshness hints.
+
 ### Hidden tool smoke test
 
 `GET /api/chat-tools-smoke` runs sample calls for all chat tools and returns pass/fail + timings.

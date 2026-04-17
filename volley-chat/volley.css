@@ -76,6 +76,49 @@ body.volley-page {
   font-size: 0.72rem;
 }
 
+.volley-controls-row {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.volley-style-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.volley-style-select {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.74rem;
+  padding: 0.2rem 0.45rem;
+}
+
+.volley-context-bar {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.volley-context-chip {
+  border: 1px solid var(--border);
+  background: rgba(196, 165, 116, 0.1);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 0.16rem 0.52rem;
+  font-size: 0.71rem;
+}
+
+.volley-context-chip.clear {
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .volley-main {
   flex: 1;
   display: flex;
@@ -119,6 +162,42 @@ body.volley-page {
   color: var(--fg);
 }
 
+.volley-tool-detail {
+  margin: 0.2rem 0 0.05rem;
+  border-left: 2px solid var(--border);
+  padding-left: 0.45rem;
+}
+
+.volley-tool-detail summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.volley-tool-pre {
+  margin: 0.25rem 0 0;
+  font-size: 0.7rem;
+  color: #b9b6b2;
+  white-space: pre-wrap;
+}
+
+.volley-quick-actions {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.volley-quick-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  border-radius: 999px;
+  font-size: 0.66rem;
+  padding: 0.12rem 0.46rem;
+  cursor: pointer;
+}
+
 .volley-thread {
   flex: 1;
   overflow-y: auto;
@@ -156,6 +235,12 @@ body.volley-page {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 0.35rem;
+}
+
+.volley-msg-meta {
+  margin-top: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--muted);
 }
 
 .volley-composer {
