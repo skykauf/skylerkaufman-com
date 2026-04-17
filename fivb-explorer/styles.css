@@ -78,6 +78,47 @@ button {
   min-height: 1.5rem;
 }
 
+.filters {
+  margin-top: 0.4rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: #d8cfbf;
+}
+
+input,
+select {
+  border: 1px solid var(--border);
+  background: #10131a;
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+}
+
+.checkbox-label input {
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+}
+
 .card {
   border: 1px solid var(--border);
   background: linear-gradient(180deg, #17171d, var(--panel));
@@ -120,4 +161,9 @@ th {
 
 .muted {
   color: var(--muted);
+}
+
+.warning {
+  color: #f6bf7f;
+  font-weight: 600;
 }
