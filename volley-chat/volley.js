@@ -5,6 +5,7 @@
   const sendBtn = document.getElementById("send");
   const statusEl = document.getElementById("status");
   const modelMetaEl = document.getElementById("modelMeta");
+  const toolActivityEl = document.getElementById("toolActivity");
 
   /** @type {{ role: string, content: string }[]} */
   const history = [];
@@ -57,6 +58,56 @@
     thread.scrollTop = thread.scrollHeight;
   }
 
+  function clearToolActivity() {
+    toolActivityEl.innerHTML = "";
+  }
+
+  function pushToolActivity(text, active = false) {
+    const line = document.createElement("div");
+    line.className = `volley-tool-line${active ? " active" : ""}`;
+    line.textContent = text;
+    toolActivityEl.appendChild(line);
+    toolActivityEl.scrollTop = toolActivityEl.scrollHeight;
+  }
+
+  function stageLabel(stage) {
+    if (stage === "plan_tools") return "Planning tool usage";
+    if (stage === "final_answer") return "Composing final answer";
+    if (stage === "hf_first_pass") return "Model first pass";
+    if (stage === "hf_second_pass") return "Model second pass";
+    return stage || "Model step";
+  }
+
+  function handleProgressEvent(evt) {
+    if (!evt || typeof evt !== "object") return;
+    if (evt.type === "start") {
+      clearToolActivity();
+      pushToolActivity("Starting request…", true);
+      return;
+    }
+    if (evt.type === "model_start") {
+      const modelName = evt.model ? ` (${evt.model})` : "";
+      pushToolActivity(`${stageLabel(evt.stage)}${modelName}…`, true);
+      return;
+    }
+    if (evt.type === "model_done") {
+      pushToolActivity(`${stageLabel(evt.stage)} done.`);
+      return;
+    }
+    if (evt.type === "tool_start") {
+      pushToolActivity(`Running tool: ${evt.tool}`, true);
+      return;
+    }
+    if (evt.type === "tool_done") {
+      const rowInfo = typeof evt.rows === "number" ? ` (${evt.rows} rows)` : "";
+      pushToolActivity(`${evt.tool} ${evt.ok ? "done" : "failed"}${rowInfo}.`);
+      return;
+    }
+    if (evt.type === "error") {
+      pushToolActivity(`Error: ${evt.detail || evt.error || "request failed"}`);
+    }
+  }
+
   async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
@@ -67,23 +118,23 @@
 
     sendBtn.disabled = true;
     setStatus("Thinking…");
+    clearToolActivity();
+    pushToolActivity("Waiting for model…", true);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, stream: true }),
       });
-
-      const rawText = await res.text();
-      let data = {};
-      try {
-        data = rawText ? JSON.parse(rawText) : {};
-      } catch {
-        data = {};
-      }
-
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
+        const rawText = await res.text();
+        let data = {};
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch {
+          data = {};
+        }
         const msg = formatErrorMessage(res.status, data, rawText);
         setModelMeta(data?.provider, data?.model);
         setStatus(msg);
@@ -92,6 +143,49 @@
         return;
       }
 
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let finalEvent = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, idx).trim();
+          buf = buf.slice(idx + 1);
+          if (!line) continue;
+          let evt;
+          try {
+            evt = JSON.parse(line);
+          } catch {
+            continue;
+          }
+          handleProgressEvent(evt);
+          if (evt.type === "final") {
+            finalEvent = evt;
+          } else if (evt.type === "error") {
+            finalEvent = { status: evt.status || 500, body: { error: evt.error, detail: evt.detail } };
+          }
+        }
+      }
+
+      if (!finalEvent) {
+        throw new Error("No final event from chat stream.");
+      }
+
+      if (finalEvent.status < 200 || finalEvent.status >= 300) {
+        const msg = formatErrorMessage(finalEvent.status, finalEvent.body || {}, "");
+        setModelMeta(finalEvent.body?.provider, finalEvent.body?.model);
+        setStatus(msg);
+        history.pop();
+        thread.removeChild(thread.lastElementChild);
+        return;
+      }
+
+      const data = finalEvent.body || {};
       setModelMeta(data?.provider, data?.model);
       const reply = data.content ?? "";
       history.push({ role: "assistant", content: reply });
@@ -99,6 +193,7 @@
       setStatus("");
     } catch (e) {
       setStatus("Network error. Check internet connection or server availability.");
+      pushToolActivity(`Network error: ${e.message || String(e)}`);
       history.pop();
       thread.removeChild(thread.lastElementChild);
     } finally {

@@ -87,6 +87,38 @@ body.volley-page {
   min-height: 0;
 }
 
+.volley-tools {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  margin-bottom: 0.9rem;
+}
+
+.volley-tools-head {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+
+.volley-tools-body {
+  padding: 0.5rem 0.65rem;
+  min-height: 2rem;
+  max-height: 8.5rem;
+  overflow: auto;
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.volley-tool-line.active {
+  color: var(--fg);
+}
+
 .volley-thread {
   flex: 1;
   overflow-y: auto;
