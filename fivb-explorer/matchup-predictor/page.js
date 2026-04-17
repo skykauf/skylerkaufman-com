@@ -822,9 +822,5 @@
   fields.genderPool?.addEventListener("change", () => {
     loadPlayerDirectory(fields.genderPool.value);
   });
-  loadPlayerDirectory(fields.genderPool?.value || "0").finally(() => {
-    if (predictFormEl) {
-      runPrediction({ preventDefault() {} });
-    }
-  });
+  loadPlayerDirectory(fields.genderPool?.value || "0");
 })();
