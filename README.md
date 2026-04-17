@@ -51,6 +51,12 @@ The backend supports structured tools including:
 - `player_teammate_history`
 - `most_improved_players`
 - `country_depth_report`
+- `player_status`
+- `tournament_lookup`
+- `tournament_snapshot`
+- `partnership_profile`
+- `similar_players`
+- `explain_ranking`
 - `top_players_by_country`
 - `active_players`
 - `inactive_players`
