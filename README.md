@@ -64,6 +64,7 @@ The backend supports structured tools including:
 - `best_finishes_by_player`
 - `player_recent_matches`
 - `country_matchup_record`
+- `country_opponent_performance`
 - `query_db` (safe read-only SQL fallback)
 
 Active/inactive tools use a fixed definition of activity: match played within the last 365 days.
