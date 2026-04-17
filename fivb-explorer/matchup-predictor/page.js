@@ -195,117 +195,196 @@
     return `${m[2]}-${m[1]}`;
   }
 
-  function scoreDistribution(pWin, teamASetDiff, teamBSetDiff, calibration) {
-    const dominance = Math.abs(pWin - 0.5) * 2;
-    const setEdge = clamp((teamASetDiff - teamBSetDiff) * 0.08, -0.18, 0.18);
-    const straightAIfWin = clamp(0.34 + dominance * 0.26 + setEdge, 0.18, 0.78);
-    const straightBIfWin = clamp(0.34 + dominance * 0.26 - setEdge, 0.18, 0.78);
+  function solveSetWinProbFromMatchProb(matchProb) {
+    const target = clamp(toNum(matchProb, 0.5), 0.001, 0.999);
+    let lo = 0.001;
+    let hi = 0.999;
+    for (let i = 0; i < 44; i += 1) {
+      const mid = (lo + hi) * 0.5;
+      const bestOf3 = mid * mid * (3 - 2 * mid);
+      if (bestOf3 < target) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) * 0.5;
+  }
 
-    const a20 = pWin * straightAIfWin;
-    const a21 = pWin * (1 - straightAIfWin);
-    const b20 = (1 - pWin) * straightBIfWin;
-    const b21 = (1 - pWin) * (1 - straightBIfWin);
+  function normalizeProbMap(probMap) {
+    const total = Object.values(probMap).reduce((sum, v) => sum + toNum(v, 0), 0);
+    if (total <= 0) return probMap;
+    const out = {};
+    Object.keys(probMap).forEach((k) => {
+      out[k] = probMap[k] / total;
+    });
+    return out;
+  }
 
-    const overtimeShare = clamp(0.08 + (1 - dominance) * 0.2, 0.08, 0.24);
+  function buildLoserPointDist(targetPoints, calBlock, winnerStrength) {
+    const regularRows = Array.isArray(calBlock?.regular) ? calBlock.regular : [];
+    const overtimeRows = Array.isArray(calBlock?.overtime) ? calBlock.overtime : [];
+    const regularMass = regularRows.reduce((sum, row) => sum + toNum(row.pct, 0), 0);
+    const overtimeMass = overtimeRows.reduce((sum, row) => sum + toNum(row.pct, 0), 0);
+    const rawTotal = regularMass + overtimeMass;
+
+    const observedOvertimeShare = rawTotal > 0 ? overtimeMass / rawTotal : targetPoints === 15 ? 0.12 : 0.1;
+    const overtimeShare = clamp(
+      observedOvertimeShare * (1 + (1 - Math.abs(winnerStrength)) * 0.3),
+      0.02,
+      targetPoints === 15 ? 0.35 : 0.28
+    );
     const regularShare = 1 - overtimeShare;
+
+    const tilt = -winnerStrength * 1.2;
+    const scoreWeights = {};
+
+    const regTotal = regularRows.reduce((sum, row) => sum + toNum(row.pct, 0), 0) || 1;
+    regularRows.forEach((row) => {
+      const lp = Math.floor(toNum(row.loser_points, targetPoints - 2));
+      if (lp < 0 || lp > targetPoints - 2) return;
+      const base = toNum(row.pct, 0) / regTotal;
+      const centered = lp - (targetPoints - 2) / 2;
+      scoreWeights[lp] = (scoreWeights[lp] || 0) + base * Math.exp((tilt * centered) / (targetPoints / 2));
+    });
+
+    const regNorm = normalizeProbMap(scoreWeights);
+    const out = {};
+    Object.keys(regNorm).forEach((k) => {
+      out[k] = regNorm[k] * regularShare;
+    });
+
+    const overtimeWeights = {};
+    const otTotal = overtimeRows.reduce((sum, row) => sum + toNum(row.pct, 0), 0) || 1;
+    let maxObserved = targetPoints + 3;
+    overtimeRows.forEach((row) => {
+      const lp = Math.max(targetPoints - 1, Math.floor(toNum(row.loser_points, targetPoints - 1)));
+      maxObserved = Math.max(maxObserved, lp);
+      const base = toNum(row.pct, 0) / otTotal;
+      overtimeWeights[lp] = (overtimeWeights[lp] || 0) + base;
+    });
+
+    const otObservedNorm = normalizeProbMap(overtimeWeights);
+    let observedMass = 0;
+    Object.keys(otObservedNorm).forEach((k) => {
+      const prob = otObservedNorm[k] * overtimeShare * 0.85;
+      out[k] = (out[k] || 0) + prob;
+      observedMass += prob;
+    });
+
+    const tailMass = Math.max(0, overtimeShare - observedMass);
+    if (tailMass > 0) {
+      const tailRatio = 0.57;
+      let remaining = tailMass;
+      let lp = maxObserved + 1;
+      const tailCap = targetPoints === 15 ? 40 : 55;
+      while (remaining > 1e-5 && lp < tailCap) {
+        const part = remaining * (1 - tailRatio);
+        out[lp] = (out[lp] || 0) + part;
+        remaining *= tailRatio;
+        lp += 1;
+      }
+      if (remaining > 0) {
+        const k = Math.min(tailCap, lp);
+        out[k] = (out[k] || 0) + remaining;
+      }
+    }
+
+    return normalizeProbMap(out);
+  }
+
+  function buildSetOutcomes(targetPoints, calBlock, winnerIsTeamA, winnerStrength) {
+    const loserDist = buildLoserPointDist(targetPoints, calBlock, winnerStrength);
+    const rows = [];
+    Object.keys(loserDist).forEach((k) => {
+      const loserPoints = Number(k);
+      const overtime = loserPoints >= targetPoints - 1;
+      const winnerPoints = overtime ? loserPoints + 2 : targetPoints;
+      const aPoints = winnerIsTeamA ? winnerPoints : loserPoints;
+      const bPoints = winnerIsTeamA ? loserPoints : winnerPoints;
+      rows.push({
+        score: `${aPoints}-${bPoints}`,
+        prob: toNum(loserDist[k], 0),
+      });
+    });
+    return rows;
+  }
+
+  function combineMatchRows(setRows, bucket) {
+    const map = new Map();
+    setRows.forEach((row) => {
+      const key = row.score;
+      const prev = map.get(key) || 0;
+      map.set(key, prev + toNum(row.prob, 0));
+    });
+    return Array.from(map.entries()).map(([score, prob]) => ({ score, prob, bucket }));
+  }
+
+  function scoreDistribution(pWin, teamASetDiff, teamBSetDiff, calibration) {
     const cal = calibration || fallbackCalibration();
+    const strength = clamp((pWin - 0.5) * 2 + (teamASetDiff - teamBSetDiff) * 0.12, -1, 1);
+    const pSetA = solveSetWinProbFromMatchProb(pWin);
+    const pSet3A = clamp(0.5 + (pSetA - 0.5) * 0.9, 0.04, 0.96);
 
-    const strongBias = clamp(0.2 - (pWin - 0.5) * 0.7, 0.05, 0.55);
-    const mediumBias = clamp(0.36 - (pWin - 0.5) * 0.45, 0.1, 0.7);
-    const closeBias = clamp(0.7 - (pWin - 0.5) * 0.25, 0.3, 0.94);
+    const set21A = buildSetOutcomes(21, cal.set21, true, strength);
+    const set21B = buildSetOutcomes(21, cal.set21, false, -strength);
+    const set15A = buildSetOutcomes(15, cal.set15, true, strength);
+    const set15B = buildSetOutcomes(15, cal.set15, false, -strength);
 
-    const revStrongBias = clamp(0.2 - ((1 - pWin) - 0.5) * 0.7, 0.05, 0.55);
-    const revMediumBias = clamp(0.36 - ((1 - pWin) - 0.5) * 0.45, 0.1, 0.7);
-    const revCloseBias = clamp(0.7 - ((1 - pWin) - 0.5) * 0.25, 0.3, 0.94);
+    const win2Rows = [];
+    set21A.forEach((s1) => {
+      set21A.forEach((s2) => {
+        win2Rows.push({
+          score: `${s1.score}, ${s2.score}`,
+          prob: pSetA * pSetA * s1.prob * s2.prob,
+        });
+      });
+    });
 
-    const aOppStrong = pickLoserPoints(cal.set21.regular, strongBias);
-    const aOppMedium = pickLoserPoints(cal.set21.regular, mediumBias);
-    const aOppClose = pickLoserPoints(cal.set21.regular, closeBias);
-    const bOppStrong = pickLoserPoints(cal.set21.regular, revStrongBias);
-    const bOppMedium = pickLoserPoints(cal.set21.regular, revMediumBias);
-    const bOppClose = pickLoserPoints(cal.set21.regular, revCloseBias);
+    const win3Rows = [];
+    set21A.forEach((s1) => {
+      set21B.forEach((s2) => {
+        set15A.forEach((s3) => {
+          win3Rows.push({
+            score: `${s1.score}, ${s2.score}, ${s3.score}`,
+            prob: pSetA * (1 - pSetA) * pSet3A * s1.prob * s2.prob * s3.prob,
+          });
+          win3Rows.push({
+            score: `${s2.score}, ${s1.score}, ${s3.score}`,
+            prob: (1 - pSetA) * pSetA * pSet3A * s2.prob * s1.prob * s3.prob,
+          });
+        });
+      });
+    });
 
-    const aOverLose = pickLoserPoints(cal.set21.overtime, closeBias);
-    const bOverLose = pickLoserPoints(cal.set21.overtime, revCloseBias);
-    const deciderA = pickLoserPoints(cal.set15.regular, closeBias);
-    const deciderB = pickLoserPoints(cal.set15.regular, revCloseBias);
-    const deciderAOver = pickLoserPoints(cal.set15.overtime, closeBias);
-    const deciderBOver = pickLoserPoints(cal.set15.overtime, revCloseBias);
+    const lose3Rows = [];
+    set21A.forEach((s1) => {
+      set21B.forEach((s2) => {
+        set15B.forEach((s3) => {
+          lose3Rows.push({
+            score: `${s1.score}, ${s2.score}, ${s3.score}`,
+            prob: pSetA * (1 - pSetA) * (1 - pSet3A) * s1.prob * s2.prob * s3.prob,
+          });
+          lose3Rows.push({
+            score: `${s2.score}, ${s1.score}, ${s3.score}`,
+            prob: (1 - pSetA) * pSetA * (1 - pSet3A) * s2.prob * s1.prob * s3.prob,
+          });
+        });
+      });
+    });
+
+    const lose2Rows = [];
+    set21B.forEach((s1) => {
+      set21B.forEach((s2) => {
+        lose2Rows.push({
+          score: `${s1.score}, ${s2.score}`,
+          prob: (1 - pSetA) * (1 - pSetA) * s1.prob * s2.prob,
+        });
+      });
+    });
 
     const rows = [
-      {
-        score: `${makeSetScore(21, aOppStrong, false)}, ${makeSetScore(21, aOppMedium, false)}`,
-        prob: a20 * regularShare * 0.6,
-        bucket: "win_2",
-      },
-      {
-        score: `${makeSetScore(21, aOppClose, false)}, ${makeSetScore(21, aOppMedium, false)}`,
-        prob: a20 * regularShare * 0.4,
-        bucket: "win_2",
-      },
-      {
-        score: `${makeSetScore(21, aOverLose, true)}, ${makeSetScore(21, aOverLose, true)} (overtime win Team A)`,
-        prob: a20 * overtimeShare,
-        bucket: "win_2",
-      },
-
-      {
-        score: `${makeSetScore(21, aOppClose, false)}, ${aOppClose}-21, ${makeSetScore(15, deciderA, false)}`,
-        prob: a21 * regularShare * 0.55,
-        bucket: "win_3",
-      },
-      {
-        score: `${aOppClose}-21, ${makeSetScore(21, aOppClose, false)}, ${makeSetScore(15, deciderA, false)}`,
-        prob: a21 * regularShare * 0.45,
-        bucket: "win_3",
-      },
-      {
-        score: `${makeSetScore(21, aOverLose, true)}, ${aOppClose}-21, ${makeSetScore(15, deciderAOver, true)} (overtime win Team A)`,
-        prob: a21 * overtimeShare,
-        bucket: "win_3",
-      },
-
-      {
-        score: `${flipScore(makeSetScore(21, bOppClose, false))}, ${makeSetScore(21, bOppClose, false)}, ${flipScore(
-          makeSetScore(15, deciderB, false)
-        )}`,
-        prob: b21 * regularShare * 0.45,
-        bucket: "lose_3",
-      },
-      {
-        score: `${makeSetScore(21, bOppClose, false)}, ${flipScore(makeSetScore(21, bOppClose, false))}, ${flipScore(
-          makeSetScore(15, deciderB, false)
-        )}`,
-        prob: b21 * regularShare * 0.55,
-        bucket: "lose_3",
-      },
-      {
-        score: `${flipScore(makeSetScore(21, bOverLose, true))}, ${makeSetScore(
-          21,
-          bOppClose,
-          false
-        )}, ${flipScore(makeSetScore(15, deciderBOver, true))} (overtime win Team B)`,
-        prob: b21 * overtimeShare,
-        bucket: "lose_3",
-      },
-
-      {
-        score: `${bOppMedium}-21, ${bOppStrong}-21`,
-        prob: b20 * regularShare * 0.6,
-        bucket: "lose_2",
-      },
-      {
-        score: `${bOppMedium}-21, ${bOppClose}-21`,
-        prob: b20 * regularShare * 0.4,
-        bucket: "lose_2",
-      },
-      {
-        score: `${flipScore(makeSetScore(21, bOverLose, true))}, ${flipScore(
-          makeSetScore(21, bOverLose, true)
-        )} (overtime win Team B)`,
-        prob: b20 * overtimeShare,
-        bucket: "lose_2",
-      },
+      ...combineMatchRows(win2Rows, "win_2"),
+      ...combineMatchRows(win3Rows, "win_3"),
+      ...combineMatchRows(lose3Rows, "lose_3"),
+      ...combineMatchRows(lose2Rows, "lose_2"),
     ];
 
     return normalizeDistribution(rows);
