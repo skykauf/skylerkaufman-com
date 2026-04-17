@@ -155,6 +155,19 @@
       label: "FIVB Explorer",
     });
     planets.push({
+      relX: small ? 0.78 : 0.62,
+      relY: small ? 0.62 : 0.22,
+      r: s * (small ? 0.034 : 0.04),
+      drift: s * 0.011,
+      phase: 0.8,
+      ring: false,
+      core: [106, 116, 180],
+      edge: [48, 56, 92],
+      rim: [162, 174, 228],
+      href: "/fivb-explorer/matchup-predictor/",
+      label: "Matchup Predictor",
+    });
+    planets.push({
       relX: 0.72,
       relY: 0.78,
       r: s * (small ? 0.035 : 0.042),
