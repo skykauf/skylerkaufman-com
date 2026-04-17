@@ -78,6 +78,13 @@
     return stage || "Model step";
   }
 
+  function formatDuration(ms) {
+    const n = Number(ms);
+    if (!Number.isFinite(n) || n < 0) return "";
+    if (n < 1000) return `${Math.round(n)}ms`;
+    return `${(n / 1000).toFixed(1)}s`;
+  }
+
   function handleProgressEvent(evt) {
     if (!evt || typeof evt !== "object") return;
     if (evt.type === "start") {
@@ -91,7 +98,8 @@
       return;
     }
     if (evt.type === "model_done") {
-      pushToolActivity(`${stageLabel(evt.stage)} done.`);
+      const d = formatDuration(evt.duration_ms);
+      pushToolActivity(`${stageLabel(evt.stage)} done${d ? ` in ${d}` : ""}.`);
       return;
     }
     if (evt.type === "tool_start") {
@@ -100,7 +108,8 @@
     }
     if (evt.type === "tool_done") {
       const rowInfo = typeof evt.rows === "number" ? ` (${evt.rows} rows)` : "";
-      pushToolActivity(`${evt.tool} ${evt.ok ? "done" : "failed"}${rowInfo}.`);
+      const d = formatDuration(evt.duration_ms);
+      pushToolActivity(`${evt.tool} ${evt.ok ? "done" : "failed"}${rowInfo}${d ? ` in ${d}` : ""}.`);
       return;
     }
     if (evt.type === "error") {
