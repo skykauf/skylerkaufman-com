@@ -17,6 +17,13 @@
   const directoryCache = new Map();
   let calibrationPromise = null;
   let suggestionTimer = 0;
+  const DEFAULT_MATCHUP = {
+    a1: "Paul Pascariuc #156224",
+    a2: "Alexander Horst #103677",
+    b1: "Dexter Campbell #222241",
+    b2: "Skyler Kaufman #219467",
+    genderPool: "0",
+  };
 
   function esc(v) {
     return String(v ?? "")
@@ -619,30 +626,6 @@
   }
 
   function renderResult(model) {
-    const sorted = [...(model.distribution || [])].sort((a, b) => toNum(b.prob) - toNum(a.prob));
-    const topRows = sorted.slice(0, 12);
-    const maxProb = Math.max(...topRows.map((row) => toNum(row.prob, 0)), 0.001);
-    let cumulative = 0;
-    const chartRows = topRows
-      .map((row) => {
-        const p = toNum(row.prob, 0);
-        cumulative += p;
-        const widthPct = (p / maxProb) * 100;
-        return `
-          <div class="outcome-row">
-            <div class="outcome-topline">
-              <span class="outcome-score">${esc(row.score)}</span>
-              <span class="outcome-prob">${pct(p)}</span>
-            </div>
-            <div class="outcome-bar-track">
-              <div class="outcome-bar-fill" style="width:${widthPct.toFixed(2)}%"></div>
-            </div>
-            <div class="outcome-cumulative">Cumulative: ${pct(cumulative)}</div>
-          </div>
-        `;
-      })
-      .join("");
-
     const bucketMap = {
       win_2: "Team A win in 2 sets",
       win_3: "Team A win in 3 sets",
@@ -757,8 +740,6 @@
         ${renderSetPanel("Set 2", set2)}
         ${renderSetPanel("Set 3 (if played)", set3)}
       </div>
-      <h3 class="outcome-title">Top exact score outcomes</h3>
-      <div class="outcome-chart">${chartRows}</div>
     `;
   }
 
@@ -833,6 +814,11 @@
 
   predictFormEl?.addEventListener("submit", runPrediction);
   bindSuggestionInputs();
+  if (fields.a1) fields.a1.value = DEFAULT_MATCHUP.a1;
+  if (fields.a2) fields.a2.value = DEFAULT_MATCHUP.a2;
+  if (fields.b1) fields.b1.value = DEFAULT_MATCHUP.b1;
+  if (fields.b2) fields.b2.value = DEFAULT_MATCHUP.b2;
+  if (fields.genderPool) fields.genderPool.value = DEFAULT_MATCHUP.genderPool;
   fields.genderPool?.addEventListener("change", () => {
     loadPlayerDirectory(fields.genderPool.value);
   });
