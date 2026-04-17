@@ -47,10 +47,13 @@ The chat page calls `/api/chat`, which resolves to the Vercel function in produc
 The backend supports structured tools including:
 - `top_players_by_country`
 - `active_players`
+- `inactive_players`
 - `best_finishes_by_player`
 - `player_recent_matches`
 - `country_matchup_record`
 - `query_db` (safe read-only SQL fallback)
+
+Several player tools also accept `active_within_days` so you can constrain results to recently active players.
 
 OpenAI is used first when `OPENAI_API_KEY` is set; otherwise the app falls back to the Hugging Face JSON tool-call loop.
 
