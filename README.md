@@ -65,6 +65,13 @@ OpenAI is used first when `OPENAI_API_KEY` is set; otherwise the app falls back 
 
 For safety, only `SELECT`/`WITH` read-only SQL is allowed in this skeleton.
 
+### Hidden tool smoke test
+
+`GET /api/chat-tools-smoke` runs sample calls for all chat tools and returns pass/fail + timings.
+
+- Optional protection: set `CHAT_SMOKE_TOKEN`, then send header `x-smoke-token: <token>`.
+- Endpoint is intentionally not linked in the UI.
+
 ## Supabase schema bootstrap (no manual SQL)
 
 With **`DATABASE_URL`** set on Vercel, the home page triggers **`GET /api/bootstrap-supabase`**, which runs idempotent DDL (`CREATE SCHEMA IF NOT EXISTS` for `raw`, `staging`, `core`, `mart` and matching **`GRANT`**s). That mirrors **`fivb-pipeline/supabase_setup.sql`** so you do not need to paste SQL in the Supabase dashboard. Responses are cacheable for a few minutes to keep load low.

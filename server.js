@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { generateChatReply } = require("./lib/chat-service");
+const { generateChatReply, runToolSmokeTests } = require("./lib/chat-service");
 const { bootstrapSupabase } = require("./lib/bootstrap-supabase");
 const { getFivbProfile } = require("./lib/fivb-profile");
 
@@ -53,6 +53,29 @@ app.get("/api/fivb-profile", async (req, res) => {
     });
   }
 });
+
+async function handleChatToolsSmoke(req, res) {
+  const secret = process.env.CHAT_SMOKE_TOKEN || "";
+  if (secret) {
+    const header = req.headers["x-smoke-token"];
+    if (typeof header !== "string" || header !== secret) {
+      return res.status(401).json({ ok: false, error: "Unauthorized." });
+    }
+  }
+  try {
+    const out = await runToolSmokeTests();
+    return res.status(out.ok ? 200 : 500).json(out);
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      error: "Smoke test failed.",
+      detail: err.message || String(err),
+    });
+  }
+}
+
+app.get("/api/chat-tools-smoke", handleChatToolsSmoke);
+app.post("/api/chat-tools-smoke", handleChatToolsSmoke);
 
 app.post("/api/chat", async (req, res) => {
   try {
