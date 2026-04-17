@@ -65,3 +65,13 @@ Expect JSON with `"content"` on success. A `404` on `/api/chat` usually means th
 ## HF router
 
 Chat uses Hugging Face **router** OpenAI-compatible **`/v1/chat/completions`**, not legacy `/models/{id}`. Default base is `https://router.huggingface.co/v1` (see `lib/chat-service.js`).
+
+## Chat tool smoke-test requirement
+
+When adding or changing structured chat tools in `lib/chat-service.js`, you must also update `runToolSmokeTests()` so the new/changed tool is exercised by `/api/chat-tools-smoke`.
+
+Minimum requirement for tool-related changes:
+
+- Add (or adjust) a representative smoke-test case for the tool in `runToolSmokeTests()`.
+- Ensure `/api/chat-tools-smoke` returns `ok: true` locally (or in a deployed environment with valid DB env vars).
+- Do not merge tool additions that are missing smoke-test coverage.
