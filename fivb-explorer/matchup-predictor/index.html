@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Matchup Predictor</title>
+    <meta
+      name="description"
+      content="Predict beach volleyball matchups using career Elo and recent-form rollups."
+    />
+    <link rel="stylesheet" href="/fivb-explorer/matchup-predictor/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Model World</p>
+        <h1>Matchup Predictor</h1>
+        <p class="lede">
+          Pick any two teams by selecting all four players. The model blends career Elo and recent
+          form rollups to estimate win probability and likely final score distribution.
+        </p>
+        <p class="actions">
+          <a href="/" class="link">Back Home</a>
+          <a href="/fivb-explorer/" class="link">Back to Explorer</a>
+        </p>
+        <p id="status" class="status">Choose four players to run a prediction.</p>
+      </header>
+
+      <section class="card">
+        <h2>Inputs</h2>
+        <form id="predictForm" class="predict-form">
+          <div class="grid2">
+            <fieldset>
+              <legend>Team A</legend>
+              <label>
+                Player A1
+                <input id="playerA1" list="playerOptions" placeholder="Name or ID (required)" required />
+              </label>
+              <label>
+                Player A2
+                <input id="playerA2" list="playerOptions" placeholder="Name or ID (required)" required />
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>Team B</legend>
+              <label>
+                Player B1
+                <input id="playerB1" list="playerOptions" placeholder="Name or ID (required)" required />
+              </label>
+              <label>
+                Player B2
+                <input id="playerB2" list="playerOptions" placeholder="Name or ID (required)" required />
+              </label>
+            </fieldset>
+          </div>
+          <datalist id="playerOptions"></datalist>
+          <div class="config-row">
+            <label>
+              Recent form window (matches)
+              <input id="recentWindow" type="number" min="3" max="40" value="12" />
+            </label>
+            <button type="submit">Run Prediction</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Prediction</h2>
+        <div id="predictionResults" class="muted">No prediction yet.</div>
+      </section>
+    </main>
+
+    <script src="/fivb-explorer/matchup-predictor/page.js" defer></script>
+  </body>
+</html>
