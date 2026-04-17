@@ -10,10 +10,6 @@
   const nameEl = document.getElementById("name");
   const countryEl = document.getElementById("country");
   const genderEl = document.getElementById("gender");
-  const minHeightEl = document.getElementById("minHeight");
-  const maxHeightEl = document.getElementById("maxHeight");
-  const minWeightEl = document.getElementById("minWeight");
-  const maxWeightEl = document.getElementById("maxWeight");
   const limitEl = document.getElementById("limit");
 
   const historyPlayerIdEl = document.getElementById("historyPlayerId");
@@ -32,6 +28,12 @@
     const n = Number(v);
     if (!Number.isFinite(n)) return esc(v);
     return n.toLocaleString("en-US");
+  }
+
+  function fmtGender(v) {
+    if (String(v) === "0") return "Male";
+    if (String(v) === "1") return "Female";
+    return esc(v);
   }
 
   function toMaybeNumber(v) {
@@ -82,10 +84,6 @@
         name: nameEl.value,
         country_code: countryEl.value,
         gender: genderEl.value,
-        min_height_cm: toMaybeNumber(minHeightEl.value),
-        max_height_cm: toMaybeNumber(maxHeightEl.value),
-        min_weight_kg: toMaybeNumber(minWeightEl.value),
-        max_weight_kg: toMaybeNumber(maxWeightEl.value),
         limit: toMaybeNumber(limitEl.value) || 50,
       });
 
@@ -95,7 +93,7 @@
           { key: "player_id", label: "Player ID", format: (v) => fmtNum(v) },
           { key: "full_name", label: "Name" },
           { key: "country_code", label: "Country" },
-          { key: "gender", label: "Gender" },
+          { key: "gender", label: "Gender", format: (v) => fmtGender(v) },
           { key: "height_cm", label: "Height (cm)", format: (v) => fmtNum(v) },
           { key: "weight_kg_est", label: "Weight (kg est)", format: (v) => fmtNum(v) },
           {
@@ -139,7 +137,7 @@
         playerProfileEl.innerHTML = `
           <p>
             <strong>${esc(p.full_name)}</strong>
-            (ID ${fmtNum(p.player_id)}) - ${esc(p.country_code || "UNK")} - gender ${esc(p.gender)} -
+            (ID ${fmtNum(p.player_id)}) - ${esc(p.country_code || "UNK")} - gender ${fmtGender(p.gender)} -
             height ${fmtNum(p.height_cm)} cm - weight ${fmtNum(p.weight_kg_est)} kg
           </p>
         `;
@@ -165,7 +163,7 @@
           { key: "as_of_date", label: "As Of" },
           { key: "match_id", label: "Match ID", format: (v) => fmtNum(v) },
           { key: "elo_rating", label: "ELO" },
-          { key: "gender", label: "Gender" },
+          { key: "gender", label: "Gender", format: (v) => fmtGender(v) },
         ],
         out.elo_history
       );

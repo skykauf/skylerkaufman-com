@@ -4,6 +4,7 @@
 
 - For any code change, create an appropriately named branch from `main` before editing (for example: `feat/chat-timeout`, `fix/fivb-profile-null`, `chore/deps-update`).
 - Keep branch names concise and descriptive, using `feat/`, `fix/`, `chore/`, `docs/`, or `refactor/` prefixes where they fit.
+- This branch -> push branch -> fast-forward merge to `main` -> push `main` sequence is the default delivery pattern unless the user explicitly requests a different flow.
 - Before opening a PR or merging, sync with `origin/main` and resolve conflicts on the branch.
 - After **substantive** changes (features, bug fixes, config that affects deploy), commit and push the branch, then automatically merge it into `main` when checks pass and there are no conflicts.
 - Do not commit directly to `main` unless the user explicitly requests an exception.

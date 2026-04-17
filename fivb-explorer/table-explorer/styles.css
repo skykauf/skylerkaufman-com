@@ -113,7 +113,8 @@ label {
   color: #d8cfbf;
 }
 
-input {
+input,
+select {
   border: 1px solid var(--border);
   background: #10131a;
   color: var(--fg);
