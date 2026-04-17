@@ -496,6 +496,110 @@
     playerOptionsEl.innerHTML = options;
   }
 
+  function parseMatchMargin(score) {
+    const sets = String(score || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    let margin = 0;
+    for (const setScore of sets) {
+      const m = setScore.match(/(\d+)\s*-\s*(\d+)/);
+      if (!m) continue;
+      margin += Number(m[1]) - Number(m[2]);
+    }
+    return margin;
+  }
+
+  function aggregateMargins(distribution) {
+    const map = new Map();
+    for (const row of distribution || []) {
+      const m = parseMatchMargin(row.score);
+      const p = toNum(row.prob, 0);
+      map.set(m, (map.get(m) || 0) + p);
+    }
+    return map;
+  }
+
+  function bucketMargins(marginMap, bucketSize = 2) {
+    const map = new Map();
+    marginMap.forEach((prob, margin) => {
+      const center = Math.round(margin / bucketSize) * bucketSize;
+      map.set(center, (map.get(center) || 0) + prob);
+    });
+    return Array.from(map.entries())
+      .map(([center, prob]) => ({ center: Number(center), prob: toNum(prob, 0) }))
+      .sort((a, b) => a.center - b.center);
+  }
+
+  function buildMarginChartSvg(bins, expectedMargin) {
+    if (!bins || bins.length === 0) return "";
+    const width = 820;
+    const height = 260;
+    const pad = { left: 40, right: 18, top: 18, bottom: 42 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+
+    const minX = bins[0].center;
+    const maxX = bins[bins.length - 1].center;
+    const span = Math.max(1, maxX - minX);
+    const maxP = Math.max(...bins.map((b) => b.prob), 0.000001);
+    const step = bins.length > 1 ? (plotW / span) * (bins[1].center - bins[0].center) : 28;
+    const barW = clamp(step * 0.78, 4, 24);
+
+    const x = (v) => pad.left + ((v - minX) / span) * plotW;
+    const y = (p) => pad.top + plotH - (p / maxP) * plotH;
+    const zeroX = x(clamp(0, minX, maxX));
+    const expX = x(clamp(expectedMargin, minX, maxX));
+    const closeLo = x(clamp(-4, minX, maxX));
+    const closeHi = x(clamp(4, minX, maxX));
+
+    const bars = bins
+      .map((b) => {
+        const bx = x(b.center) - barW / 2;
+        const by = y(b.prob);
+        const bh = pad.top + plotH - by;
+        const color = b.center < 0 ? "#a96a6a" : b.center > 0 ? "#6f8ddd" : "#9a97b8";
+        return `<rect x="${bx.toFixed(2)}" y="${by.toFixed(2)}" width="${barW.toFixed(
+          2
+        )}" height="${bh.toFixed(2)}" rx="2" fill="${color}" />`;
+      })
+      .join("");
+
+    const tickVals = Array.from(
+      new Set([minX, -4, 0, 4, maxX].filter((v) => v >= minX && v <= maxX).map((v) => Math.round(v)))
+    ).sort((a, b) => a - b);
+    const ticks = tickVals
+      .map((v) => {
+        const tx = x(v);
+        return `
+          <line x1="${tx.toFixed(2)}" y1="${pad.top + plotH}" x2="${tx.toFixed(2)}" y2="${
+            pad.top + plotH + 5
+          }" stroke="#6f6d7f" stroke-width="1" />
+          <text x="${tx.toFixed(2)}" y="${pad.top + plotH + 18}" text-anchor="middle" fill="#9a978f" font-size="11">${v}</text>
+        `;
+      })
+      .join("");
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" class="margin-svg" aria-label="Match margin distribution">
+        <rect x="0" y="0" width="${width}" height="${height}" fill="#131420" />
+        <rect x="${closeLo.toFixed(2)}" y="${pad.top}" width="${Math.max(0, closeHi - closeLo).toFixed(
+          2
+        )}" height="${plotH}" fill="rgba(176, 169, 226, 0.12)" />
+        <line x1="${pad.left}" y1="${pad.top + plotH}" x2="${pad.left + plotW}" y2="${pad.top + plotH}" stroke="#3a3a49" />
+        ${bars}
+        <line x1="${zeroX.toFixed(2)}" y1="${pad.top}" x2="${zeroX.toFixed(
+          2
+        )}" y2="${pad.top + plotH}" stroke="#b6b4c6" stroke-width="1.3" stroke-dasharray="4 3" />
+        <line x1="${expX.toFixed(2)}" y1="${pad.top}" x2="${expX.toFixed(
+          2
+        )}" y2="${pad.top + plotH}" stroke="#7fc0ac" stroke-width="1.6" />
+        ${ticks}
+        <text x="${pad.left + 4}" y="${pad.top + 12}" fill="#9a978f" font-size="11">Probability density</text>
+      </svg>
+    `;
+  }
+
   function renderResult(model) {
     const sorted = [...(model.distribution || [])].sort((a, b) => toNum(b.prob) - toNum(a.prob));
     const topRows = sorted.slice(0, 12);
@@ -541,6 +645,20 @@
       })
       .join("");
 
+    const marginMap = aggregateMargins(model.distribution || []);
+    const marginBins = bucketMargins(marginMap, 2);
+    const expectedMargin = (model.distribution || []).reduce(
+      (sum, row) => sum + parseMatchMargin(row.score) * toNum(row.prob, 0),
+      0
+    );
+    const teamAWinFromArea = (model.distribution || [])
+      .filter((row) => parseMatchMargin(row.score) > 0)
+      .reduce((sum, row) => sum + toNum(row.prob, 0), 0);
+    const closeZoneProb = (model.distribution || [])
+      .filter((row) => Math.abs(parseMatchMargin(row.score)) <= 4)
+      .reduce((sum, row) => sum + toNum(row.prob, 0), 0);
+    const marginSvg = buildMarginChartSvg(marginBins, expectedMargin);
+
     predictionResultsEl.innerHTML = `
       <div class="kpis">
         <div class="kpi">
@@ -565,7 +683,17 @@
         and Elo trend over the selected recent-match window).
       </p>
       <div class="bucket-grid">${bucketHtml}</div>
-      <h3 class="outcome-title">Likely final score outcomes (horizontal chart)</h3>
+      <h3 class="outcome-title">Match point-margin distribution</h3>
+      <div class="margin-metrics">
+        <span>Area right of 0 (Team A win): <strong>${pct(teamAWinFromArea)}</strong></span>
+        <span>Expected margin: <strong>${expectedMargin.toFixed(1)}</strong></span>
+        <span>Close-match zone (-4 to +4): <strong>${pct(closeZoneProb)}</strong></span>
+      </div>
+      <div class="margin-chart-wrap">${marginSvg}</div>
+      <p class="muted">
+        Left of zero indicates Team B-leaning outcomes. Right of zero indicates Team A-leaning outcomes.
+      </p>
+      <h3 class="outcome-title">Top exact score outcomes</h3>
       <div class="outcome-chart">${chartRows}</div>
     `;
   }

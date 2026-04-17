@@ -201,6 +201,33 @@ input {
   color: #dfd6ff;
 }
 
+.margin-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.margin-metrics strong {
+  color: #ece7ff;
+  font-weight: 600;
+}
+
+.margin-chart-wrap {
+  border: 1px solid #2a2a36;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #131420;
+}
+
+.margin-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .outcome-chart {
   display: grid;
   gap: 0.48rem;
