@@ -26,7 +26,7 @@ Open [http://localhost:3000](http://localhost:3000), then click the ringed **Vol
 Use `.env.example` as reference:
 
 - `OPENAI_API_KEY` (optional, preferred) - enables OpenAI chat + structured function calling
-- `OPENAI_MODEL` (optional) - defaults to `gpt-4.1-mini`
+- `OPENAI_MODEL` (optional) - defaults to `gpt-4o-mini`
 - `OPENAI_BASE_URL` (optional) - defaults to `https://api.openai.com/v1`
 - `HF_TOKEN` (optional fallback) - Hugging Face access token
 - `HF_MODEL` (optional) - defaults to `meta-llama/Meta-Llama-3-8B-Instruct`
