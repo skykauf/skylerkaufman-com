@@ -6,7 +6,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); console.log('verify: ok')\""
+    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); require('./lib/fivb-profile'); console.log('verify: ok')\""
   },
   "dependencies": {
     "express": "^4.21.2",

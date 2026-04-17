@@ -142,6 +142,19 @@
       label: "Volley Chat",
     });
     planets.push({
+      relX: small ? 0.2 : 0.18,
+      relY: small ? 0.72 : 0.68,
+      r: s * (small ? 0.038 : 0.046),
+      drift: s * 0.01,
+      phase: 3.2,
+      ring: false,
+      core: [90, 135, 122],
+      edge: [36, 62, 56],
+      rim: [145, 198, 182],
+      href: "/fivb-explorer/",
+      label: "FIVB Explorer",
+    });
+    planets.push({
       relX: 0.72,
       relY: 0.78,
       r: s * (small ? 0.035 : 0.042),

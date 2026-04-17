@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FIVB Database Explorer</title>
+    <meta
+      name="description"
+      content="Quick profile of Supabase FIVB data freshness and quality."
+    />
+    <link rel="stylesheet" href="/fivb-explorer/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Another Planet</p>
+        <h1>FIVB Database Explorer</h1>
+        <p class="lede">
+          Live profile from Supabase: freshness, row counts, null rates, country coverage, ELO
+          distribution, and matches by year.
+        </p>
+        <p class="actions">
+          <a href="/" class="link">Back Home</a>
+          <button id="refresh" type="button">Refresh</button>
+        </p>
+        <p id="status" class="status">Loading profile...</p>
+      </header>
+
+      <section class="card">
+        <h2>Freshness</h2>
+        <div id="freshness"></div>
+      </section>
+
+      <section class="card">
+        <h2>Null Rates</h2>
+        <div id="nullRates"></div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Top Countries (Players)</h2>
+          <div id="countries"></div>
+        </article>
+        <article class="card">
+          <h2>ELO Buckets</h2>
+          <div id="elo"></div>
+        </article>
+      </section>
+
+      <section class="card">
+        <h2>Matches by Year</h2>
+        <div id="years"></div>
+      </section>
+    </main>
+
+    <script src="/fivb-explorer/page.js" defer></script>
+  </body>
+</html>
