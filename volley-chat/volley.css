@@ -83,6 +83,35 @@ body.volley-page {
   gap: 0.5rem;
 }
 
+.volley-auth-row {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.volley-auth-btn {
+  border: 1px solid var(--accent);
+  background: rgba(196, 165, 116, 0.12);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.24rem 0.62rem;
+  font-size: 0.71rem;
+  cursor: pointer;
+}
+
+.volley-auth-btn.secondary {
+  border-color: var(--border);
+  color: var(--muted);
+  background: transparent;
+}
+
+.volley-auth-status {
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
 .volley-style-label {
   font-size: 0.75rem;
   color: var(--muted);
@@ -135,6 +164,52 @@ body.volley-page {
   background: var(--surface);
   border-radius: 10px;
   margin-bottom: 0.9rem;
+}
+
+.volley-history {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  margin-bottom: 0.9rem;
+}
+
+.volley-history-actions {
+  padding: 0.45rem 0.65rem 0;
+}
+
+.volley-history-list {
+  padding: 0.45rem 0.65rem 0.6rem;
+  min-height: 2rem;
+  max-height: 10rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.volley-history-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  padding: 0.4rem 0.52rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.volley-history-item.active {
+  border-color: var(--accent);
+  background: rgba(196, 165, 116, 0.1);
+}
+
+.volley-history-item-title {
+  font-size: 0.76rem;
+}
+
+.volley-history-item-meta {
+  color: var(--muted);
+  font-size: 0.67rem;
+  margin-top: 0.2rem;
 }
 
 .volley-tools-head {

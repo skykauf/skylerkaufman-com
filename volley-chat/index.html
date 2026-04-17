@@ -22,10 +22,22 @@
           <option value="scout">Scout report</option>
         </select>
       </div>
+      <div class="volley-auth-row">
+        <button id="googleSignIn" class="volley-auth-btn" type="button">Sign in with Google</button>
+        <button id="signOut" class="volley-auth-btn secondary" type="button" hidden>Sign out</button>
+        <span id="authStatus" class="volley-auth-status">Guest mode (ephemeral chat)</span>
+      </div>
       <div id="contextBar" class="volley-context-bar"></div>
     </header>
 
     <main class="volley-main">
+      <section class="volley-history">
+        <div class="volley-tools-head">Saved Chats</div>
+        <div class="volley-history-actions">
+          <button id="newChat" class="volley-auth-btn secondary" type="button">New chat</button>
+        </div>
+        <div id="historyList" class="volley-history-list"></div>
+      </section>
       <section class="volley-tools">
         <div class="volley-tools-head">Tool Activity</div>
         <div id="toolActivity" class="volley-tools-body" aria-live="polite"></div>
@@ -45,6 +57,7 @@
       <p id="status" class="volley-status" role="status"></p>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/volley-chat/volley.js" defer></script>
   </body>
 </html>

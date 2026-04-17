@@ -32,6 +32,7 @@ Use `.env.example` as reference:
 - `HF_MODEL` (optional) - defaults to `meta-llama/Meta-Llama-3-8B-Instruct`
 - `HF_API_URL` (optional) - defaults to `https://router.huggingface.co/v1` (router chat API; plain `https://router.huggingface.co` is auto-suffixed with `/v1`)
 - `DATABASE_URL` (optional) - enables `query_db`, automatic Supabase schema bootstrap on the home page, and the scheduled FIVB job (duplicate this value into GitHub Actions secrets for the workflow)
+- `SUPABASE_URL` + `SUPABASE_ANON_KEY` (optional) - enables Google OAuth sign-in for Volley Chat and saved chat history for authenticated users
 - `PORT` (local only)
 
 ## Vercel deployment
@@ -75,6 +76,7 @@ Conversation UX notes:
 - The chat sends `client_context` so entities (player/country/tournament) can persist across follow-ups.
 - Users can pick a response style (`balanced`, `brief`, `table`, `scout`) from the UI.
 - Tool progress events include previews and timing; assistant replies include latency + confidence/freshness hints.
+- Signed-in users (Supabase Auth) get persisted chat history; guest chats remain ephemeral.
 
 ### Hidden tool smoke test
 

@@ -8,9 +8,22 @@
   const toolActivityEl = document.getElementById("toolActivity");
   const responseStyleEl = document.getElementById("responseStyle");
   const contextBarEl = document.getElementById("contextBar");
+  const googleSignInBtn = document.getElementById("googleSignIn");
+  const signOutBtn = document.getElementById("signOut");
+  const authStatusEl = document.getElementById("authStatus");
+  const historyListEl = document.getElementById("historyList");
+  const newChatBtn = document.getElementById("newChat");
+
+  const tabKey = "volley-chat-conversation-id";
+  let canAuth = false;
+  let supabase = null;
 
   /** @type {{ role: string, content: string }[]} */
   const history = [];
+  let conversations = [];
+  let activeConversationId = sessionStorage.getItem(tabKey) || null;
+  let accessToken = "";
+  let currentUser = null;
   let sessionContext = {};
   let modelLabel = "Unknown";
   let runMetrics = { modelMs: 0, toolMs: 0, toolCount: 0, startedAt: 0 };
@@ -23,6 +36,129 @@
     if (!provider || !model) return;
     modelLabel = `${provider} · ${model}`;
     modelMetaEl.textContent = modelLabel;
+  }
+
+  function clearThread() {
+    thread.innerHTML = "";
+  }
+
+  function renderHistoryList() {
+    historyListEl.innerHTML = "";
+    if (!currentUser) {
+      const empty = document.createElement("div");
+      empty.className = "volley-history-item-meta";
+      empty.textContent = "Sign in to save and load chat history.";
+      historyListEl.appendChild(empty);
+      return;
+    }
+    if (!Array.isArray(conversations) || conversations.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "volley-history-item-meta";
+      empty.textContent = "No saved chats yet.";
+      historyListEl.appendChild(empty);
+      return;
+    }
+    conversations.forEach((c) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `volley-history-item${c.id === activeConversationId ? " active" : ""}`;
+      const title = document.createElement("div");
+      title.className = "volley-history-item-title";
+      title.textContent = c.title || "New chat";
+      const meta = document.createElement("div");
+      meta.className = "volley-history-item-meta";
+      const when = c.updated_at ? new Date(c.updated_at).toLocaleString() : "";
+      meta.textContent = when;
+      btn.appendChild(title);
+      btn.appendChild(meta);
+      btn.addEventListener("click", () => {
+        loadConversation(c.id);
+      });
+      historyListEl.appendChild(btn);
+    });
+  }
+
+  function renderFromHistory() {
+    clearThread();
+    history.forEach((m) => appendBubble(m.role, m.content));
+  }
+
+  async function apiJson(path, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const res = await fetch(path, { ...options, headers });
+    const text = await res.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = {};
+    }
+    if (!res.ok) {
+      throw new Error(data.error || `Request failed (${res.status})`);
+    }
+    return data;
+  }
+
+  async function refreshConversations() {
+    if (!currentUser) {
+      conversations = [];
+      renderHistoryList();
+      return;
+    }
+    const data = await apiJson("/api/chat-history");
+    conversations = Array.isArray(data.conversations) ? data.conversations : [];
+    if (activeConversationId && !conversations.find((c) => c.id === activeConversationId)) {
+      activeConversationId = null;
+      sessionStorage.removeItem(tabKey);
+    }
+    renderHistoryList();
+  }
+
+  async function loadConversation(id) {
+    if (!id || !currentUser) return;
+    const data = await apiJson(`/api/chat-history/${encodeURIComponent(id)}`);
+    const msgs = Array.isArray(data.messages) ? data.messages : [];
+    history.length = 0;
+    msgs.forEach((m) => {
+      if (m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string") {
+        history.push({ role: m.role, content: m.content });
+      }
+    });
+    activeConversationId = id;
+    sessionStorage.setItem(tabKey, id);
+    renderHistoryList();
+    renderFromHistory();
+    setStatus("");
+  }
+
+  function startNewChat() {
+    history.length = 0;
+    resetContext();
+    clearToolActivity();
+    clearThread();
+    activeConversationId = null;
+    sessionStorage.removeItem(tabKey);
+    renderHistoryList();
+    setStatus(currentUser ? "New saved chat will start on your next message." : "Guest chat reset.");
+  }
+
+  function setAuthUi() {
+    if (!canAuth) {
+      googleSignInBtn.hidden = true;
+      signOutBtn.hidden = true;
+      authStatusEl.textContent = "Guest mode (auth not configured).";
+      return;
+    }
+    if (currentUser) {
+      googleSignInBtn.hidden = true;
+      signOutBtn.hidden = false;
+      authStatusEl.textContent = currentUser.email ? `Signed in: ${currentUser.email}` : "Signed in";
+      return;
+    }
+    googleSignInBtn.hidden = false;
+    signOutBtn.hidden = true;
+    authStatusEl.textContent = "Guest mode (ephemeral chat)";
   }
 
   function resetContext() {
@@ -227,12 +363,16 @@
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           messages: history,
           stream: true,
           client_context: sessionContext,
           response_style: responseStyleEl.value || "balanced",
+          conversation_id: activeConversationId,
         }),
       });
       if (!res.ok || !res.body) {
@@ -295,6 +435,10 @@
 
       const data = finalEvent.body || {};
       setModelMeta(data?.provider, data?.model);
+      if (data?.conversation_id) {
+        activeConversationId = String(data.conversation_id);
+        sessionStorage.setItem(tabKey, activeConversationId);
+      }
       sessionContext = data.context && typeof data.context === "object" ? data.context : sessionContext;
       renderContextBar();
       const reply = data.content ?? "";
@@ -305,6 +449,9 @@
         (data?.meta?.confidence ? ` | confidence ${data.meta.confidence}` : "") +
         (freshness ? ` | ${freshness}` : "");
       appendBubble("assistant", reply, metaText);
+      if (currentUser) {
+        await refreshConversations();
+      }
       setStatus("");
     } catch (e) {
       setStatus("Network error. Check internet connection or server availability.");
@@ -328,5 +475,100 @@
       sendMessage();
     }
   });
+
+  newChatBtn.addEventListener("click", () => {
+    startNewChat();
+  });
+
+  async function initAuth() {
+    try {
+      const cfgRes = await fetch("/api/auth-config", { method: "GET" });
+      if (!cfgRes.ok) throw new Error("Auth config unavailable.");
+      const cfg = await cfgRes.json();
+      if (!cfg || !cfg.enabled) {
+        canAuth = false;
+        setAuthUi();
+        renderHistoryList();
+        return;
+      }
+      if (!window.supabase || !window.supabase.createClient) {
+        canAuth = false;
+        setAuthUi();
+        renderHistoryList();
+        return;
+      }
+      canAuth = true;
+      supabase = window.supabase.createClient(cfg.url, cfg.anonKey);
+    } catch (_) {
+      canAuth = false;
+      setAuthUi();
+      renderHistoryList();
+      return;
+    }
+
+    googleSignInBtn.addEventListener("click", async () => {
+      const redirectTo = `${window.location.origin}/volley-chat/`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) {
+        setStatus(error.message || "Sign in failed.");
+      }
+    });
+
+    signOutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      currentUser = null;
+      accessToken = "";
+      conversations = [];
+      activeConversationId = null;
+      sessionStorage.removeItem(tabKey);
+      startNewChat();
+      setAuthUi();
+      renderHistoryList();
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      currentUser = session?.user || null;
+      accessToken = session?.access_token || "";
+      setAuthUi();
+      if (currentUser) {
+        refreshConversations().then(async () => {
+          if (activeConversationId) {
+            try {
+              await loadConversation(activeConversationId);
+            } catch (_) {
+              startNewChat();
+            }
+          }
+        });
+      } else {
+        conversations = [];
+        renderHistoryList();
+      }
+    });
+
+    supabase.auth.getSession().then(({ data }) => {
+      currentUser = data?.session?.user || null;
+      accessToken = data?.session?.access_token || "";
+      setAuthUi();
+      if (currentUser) {
+        refreshConversations().then(async () => {
+          if (activeConversationId) {
+            try {
+              await loadConversation(activeConversationId);
+            } catch (_) {
+              startNewChat();
+            }
+          }
+        });
+      } else {
+        renderHistoryList();
+      }
+    });
+  }
+
+  initAuth();
   renderContextBar();
 })();
