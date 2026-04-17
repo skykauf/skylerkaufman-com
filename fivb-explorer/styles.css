@@ -121,3 +121,32 @@ th {
 .muted {
   color: var(--muted);
 }
+
+.elo-list {
+  margin: 0.8rem 0 1rem;
+  padding-left: 1.2rem;
+  color: #ddd6ca;
+}
+
+.elo-list li {
+  margin: 0.35rem 0;
+}
+
+.equations {
+  border: 1px solid #2f3039;
+  background: #13151b;
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+}
+
+.equations p {
+  margin: 0.45rem 0;
+}
+
+.eq {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  color: #ece7df;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-x: auto;
+}

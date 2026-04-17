@@ -59,6 +59,15 @@ body.volley-page {
   color: var(--muted);
 }
 
+.volley-inline-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.volley-inline-link:hover {
+  text-decoration: underline;
+}
+
 .volley-model-meta {
   margin: 0.45rem 0 0;
   font-size: 0.75rem;
