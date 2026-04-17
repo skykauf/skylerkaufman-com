@@ -419,6 +419,44 @@
     return { name: value };
   }
 
+  function normalizeLookupText(text) {
+    return String(text || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  async function ensureDirectoryLoaded(genderPool) {
+    const pool = String(genderPool || "0");
+    if (!directoryCache.has(pool)) {
+      await loadPlayerDirectory(pool);
+    }
+    return directoryCache.get(pool) || [];
+  }
+
+  function matchDirectoryPlayer(parsed, rows) {
+    if (!parsed || !Array.isArray(rows) || rows.length === 0) return null;
+    if (parsed.id) {
+      return rows.find((row) => String(row?.player_id || "") === String(parsed.id)) || null;
+    }
+
+    const target = normalizeLookupText(parsed.name);
+    if (!target) return null;
+    const direct = rows.find((row) => normalizeLookupText(row?.full_name) === target);
+    if (direct) return direct;
+
+    return (
+      rows.find((row) => {
+        const name = row?.full_name || "";
+        const pid = row?.player_id || "";
+        const label = `${name} #${pid}`;
+        return normalizeLookupText(label) === target;
+      }) || null
+    );
+  }
+
   async function resolvePlayer(rawInput, genderPool) {
     const parsed = normalizePlayerInput(rawInput);
     if (!parsed) throw new Error("Each player field must be filled.");
@@ -430,20 +468,26 @@
       return playerCache.get(`name:${parsed.name.toLowerCase()}`);
     }
 
+    const directoryRows = await ensureDirectoryLoaded(genderPool);
+    if (!directoryRows.length) {
+      throw new Error("Player directory is unavailable. Try refreshing and wait for it to load.");
+    }
+
     let resolved;
     if (parsed.id) {
+      const matched = matchDirectoryPlayer(parsed, directoryRows);
+      if (!matched || !matched.player_id) {
+        throw new Error(`Player ID ${parsed.id} is not in the selected directory.`);
+      }
       const out = await callExplorer("player_history", { player_id: parsed.id, history_limit: 25 });
       if (!out.profile) throw new Error(`Could not find player with ID ${parsed.id}.`);
       resolved = out;
     } else {
-      const search = await callExplorer("search_players", {
-        name: parsed.name,
-        gender: genderPool,
-        limit: 1,
-      });
-      const top = search.rows && search.rows[0];
-      if (!top || !top.player_id) throw new Error(`No player found for "${parsed.name}".`);
-      resolved = await callExplorer("player_history", { player_id: top.player_id, history_limit: 25 });
+      const matched = matchDirectoryPlayer(parsed, directoryRows);
+      if (!matched || !matched.player_id) {
+        throw new Error(`No player found in the selected directory for "${parsed.name}".`);
+      }
+      resolved = await callExplorer("player_history", { player_id: matched.player_id, history_limit: 25 });
     }
 
     const profile = resolved.profile || {};
