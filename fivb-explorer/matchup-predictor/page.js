@@ -1,6 +1,7 @@
 (function () {
   const statusEl = document.getElementById("status");
   const predictFormEl = document.getElementById("predictForm");
+  const predictSubmitBtn = predictFormEl?.querySelector('button[type="submit"]');
   const predictionResultsEl = document.getElementById("predictionResults");
   const playerOptionsEl = document.getElementById("playerOptions");
 
@@ -457,6 +458,48 @@
     );
   }
 
+  function validateRosterAgainstDirectory(rows) {
+    const inputs = [fields.a1, fields.a2, fields.b1, fields.b2];
+    const ids = [];
+    for (const el of inputs) {
+      const parsed = normalizePlayerInput(el?.value);
+      if (!parsed) return { ok: false, reason: "incomplete" };
+      const matched = matchDirectoryPlayer(parsed, rows);
+      if (!matched?.player_id) return { ok: false, reason: "nomatch" };
+      ids.push(String(matched.player_id));
+    }
+    if (new Set(ids).size !== 4) return { ok: false, reason: "dup" };
+    return { ok: true };
+  }
+
+  function updatePredictSubmitState() {
+    const btn = predictSubmitBtn;
+    if (!btn) return;
+    const pool = String(fields.genderPool?.value || "0");
+    if (!directoryCache.has(pool)) {
+      btn.disabled = true;
+      btn.title = "Loading player directory…";
+      return;
+    }
+    const rows = directoryCache.get(pool);
+    if (!Array.isArray(rows) || rows.length === 0) {
+      btn.disabled = true;
+      btn.title = "No players loaded for this pool.";
+      return;
+    }
+    const v = validateRosterAgainstDirectory(rows);
+    btn.disabled = !v.ok;
+    if (v.ok) {
+      btn.title = "";
+    } else if (v.reason === "dup") {
+      btn.title = "Choose four distinct players.";
+    } else if (v.reason === "nomatch") {
+      btn.title = "Each field must match a player in the directory (pick from suggestions or use Name #ID).";
+    } else {
+      btn.title = "Fill all four player fields.";
+    }
+  }
+
   async function resolvePlayer(rawInput, genderPool) {
     const parsed = normalizePlayerInput(rawInput);
     if (!parsed) throw new Error("Each player field must be filled.");
@@ -518,19 +561,23 @@
 
   async function loadPlayerDirectory(genderPool) {
     const pool = String(genderPool || "0");
-    if (directoryCache.has(pool)) {
-      renderSuggestions(directoryCache.get(pool));
-      return;
-    }
-    statusEl.textContent = "Loading player dropdown...";
     try {
-      const out = await callExplorer("player_directory", { gender: pool, limit: 50000 });
-      const rows = Array.isArray(out.rows) ? out.rows : [];
-      directoryCache.set(pool, rows);
-      renderSuggestions(rows);
-      statusEl.textContent = `Loaded ${rows.length.toLocaleString("en-US")} players for dropdown.`;
-    } catch (err) {
-      statusEl.textContent = err.message || "Failed to load player dropdown.";
+      if (directoryCache.has(pool)) {
+        renderSuggestions(directoryCache.get(pool));
+        return;
+      }
+      statusEl.textContent = "Loading player dropdown...";
+      try {
+        const out = await callExplorer("player_directory", { gender: pool, limit: 50000 });
+        const rows = Array.isArray(out.rows) ? out.rows : [];
+        directoryCache.set(pool, rows);
+        renderSuggestions(rows);
+        statusEl.textContent = `Loaded ${rows.length.toLocaleString("en-US")} players for dropdown.`;
+      } catch (err) {
+        statusEl.textContent = err.message || "Failed to load player dropdown.";
+      }
+    } finally {
+      updatePredictSubmitState();
     }
   }
 
@@ -789,6 +836,7 @@
 
   async function runPrediction(event) {
     event.preventDefault();
+    if (predictSubmitBtn) predictSubmitBtn.disabled = true;
     statusEl.textContent = "Loading players and computing prediction...";
     predictionResultsEl.innerHTML = '<p class="muted">Running model...</p>';
 
@@ -841,18 +889,25 @@
     } catch (err) {
       predictionResultsEl.innerHTML = `<p class="muted">${esc(err.message || String(err))}</p>`;
       statusEl.textContent = "Prediction failed.";
+    } finally {
+      updatePredictSubmitState();
     }
   }
 
   function bindSuggestionInputs() {
     const inputs = [fields.a1, fields.a2, fields.b1, fields.b2];
     inputs.forEach((el) => {
+      const onRosterChange = () => {
+        updatePredictSubmitState();
+      };
       el?.addEventListener("input", () => {
+        onRosterChange();
         window.clearTimeout(suggestionTimer);
         suggestionTimer = window.setTimeout(() => {
           refreshSuggestions(el.value);
         }, 180);
       });
+      el?.addEventListener("change", onRosterChange);
     });
   }
 
@@ -864,7 +919,9 @@
   if (fields.b2) fields.b2.value = DEFAULT_MATCHUP.b2;
   if (fields.genderPool) fields.genderPool.value = DEFAULT_MATCHUP.genderPool;
   fields.genderPool?.addEventListener("change", () => {
+    updatePredictSubmitState();
     loadPlayerDirectory(fields.genderPool.value);
   });
+  updatePredictSubmitState();
   loadPlayerDirectory(fields.genderPool?.value || "0");
 })();
