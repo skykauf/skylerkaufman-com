@@ -45,6 +45,12 @@ The chat page calls `/api/chat`, which resolves to the Vercel function in produc
 ## Notes on tool-calling
 
 The backend supports structured tools including:
+- `find_player`
+- `player_profile`
+- `head_to_head_players`
+- `player_teammate_history`
+- `most_improved_players`
+- `country_depth_report`
 - `top_players_by_country`
 - `active_players`
 - `inactive_players`
