@@ -53,7 +53,7 @@ The backend supports structured tools including:
 - `country_matchup_record`
 - `query_db` (safe read-only SQL fallback)
 
-Several player tools also accept `active_within_days` so you can constrain results to recently active players.
+Active/inactive tools use a fixed definition of activity: match played within the last 365 days.
 
 OpenAI is used first when `OPENAI_API_KEY` is set; otherwise the app falls back to the Hugging Face JSON tool-call loop.
 
