@@ -4,12 +4,20 @@
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("send");
   const statusEl = document.getElementById("status");
+  const modelMetaEl = document.getElementById("modelMeta");
 
   /** @type {{ role: string, content: string }[]} */
   const history = [];
+  let modelLabel = "Unknown";
 
   function setStatus(text) {
     statusEl.textContent = text || "";
+  }
+
+  function setModelMeta(provider, model) {
+    if (!provider || !model) return;
+    modelLabel = `${provider} · ${model}`;
+    modelMetaEl.textContent = modelLabel;
   }
 
   function formatErrorMessage(status, data, rawText) {
@@ -40,7 +48,7 @@
     div.className = `volley-msg ${role}`;
     const label = document.createElement("div");
     label.className = "volley-role";
-    label.textContent = role === "user" ? "You" : "Local model";
+    label.textContent = role === "user" ? "You" : modelLabel;
     const body = document.createElement("div");
     body.textContent = content;
     div.appendChild(label);
@@ -77,12 +85,14 @@
 
       if (!res.ok) {
         const msg = formatErrorMessage(res.status, data, rawText);
+        setModelMeta(data?.provider, data?.model);
         setStatus(msg);
         history.pop();
         thread.removeChild(thread.lastElementChild);
         return;
       }
 
+      setModelMeta(data?.provider, data?.model);
       const reply = data.content ?? "";
       history.push({ role: "assistant", content: reply });
       appendBubble("assistant", reply);
