@@ -94,3 +94,12 @@ python run_full_pipeline.py
 ```
 
 Same behavior as the original **`scripts/run_pipeline.sh`** (incremental raw upserts, `dbt run`, Elo compute).
+
+### Pipeline runtime tuning (optional)
+
+For daily runs, the ETL can skip reloading heavy static dimensions when they were refreshed recently:
+
+- `ETL_EVENTS_REFRESH_HOURS` (default `168`)
+- `ETL_TEAMS_REFRESH_HOURS` (default `72`)
+- `ETL_PLAYERS_REFRESH_HOURS` (default `168`)
+- `ETL_FORCE_DIM_REFRESH=1` to bypass skips and force a full dimension refresh

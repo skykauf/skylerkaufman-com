@@ -559,6 +559,23 @@ def _clear_rounds_empty(engine: Engine, tournament_id: int) -> None:
         )
 
 
+def _table_ingested_recently(engine: Engine, table: str, within_hours: float) -> bool:
+    """True if table has rows ingested in the last N hours."""
+    if within_hours <= 0:
+        return False
+    with engine.connect() as conn:
+        row = conn.execute(
+            text(
+                f"""
+                SELECT max(ingested_at) >= now() - (:hours * interval '1 hour') AS is_recent
+                FROM {table}
+                """
+            ),
+            {"hours": within_hours},
+        ).fetchone()
+    return bool(row[0]) if row and row[0] is not None else False
+
+
 def _fetch_results_phase_rows(
     no_tournament: int,
     phase: Optional[str],
@@ -810,17 +827,56 @@ def run_full_ingestion(limits: IngestionLimits | None = None) -> None:
     timings: List[Tuple[str, float]] = []
 
     # 1–4. Events, Tournaments, Teams, Players (parallel – independent API calls)
+    # For daily cron, skip heavy static dimensions if refreshed recently.
+    force_dim_refresh = os.environ.get("ETL_FORCE_DIM_REFRESH", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    def _float_env(name: str, default: float) -> float:
+        raw = os.environ.get(name)
+        if raw is None or raw == "":
+            return default
+        try:
+            return float(raw)
+        except ValueError:
+            return default
+
+    events_refresh_hours = _float_env("ETL_EVENTS_REFRESH_HOURS", 168.0)
+    teams_refresh_hours = _float_env("ETL_TEAMS_REFRESH_HOURS", 72.0)
+    players_refresh_hours = _float_env("ETL_PLAYERS_REFRESH_HOURS", 168.0)
+    skip_events = (not force_dim_refresh) and _table_ingested_recently(
+        engine, "raw.raw_fivb_events", events_refresh_hours
+    )
+    skip_teams = (not force_dim_refresh) and _table_ingested_recently(
+        engine, "raw.raw_fivb_teams", teams_refresh_hours
+    )
+    skip_players = (not force_dim_refresh) and _table_ingested_recently(
+        engine, "raw.raw_fivb_players", players_refresh_hours
+    )
+
     print("\n1–4. GetEventList + GetBeachTournamentList + GetBeachTeamList + GetPlayerList (parallel)")
+    if skip_events:
+        print(f"  Skip events refresh (fresh within {events_refresh_hours:.0f}h)")
+    if skip_teams:
+        print(f"  Skip teams refresh (fresh within {teams_refresh_hours:.0f}h)")
+    if skip_players:
+        print(f"  Skip players refresh (fresh within {players_refresh_hours:.0f}h)")
+
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=4) as executor:
-        fut_events = executor.submit(load_events, engine)
         fut_tournaments = executor.submit(load_tournaments, engine)
-        fut_teams = executor.submit(load_teams, engine)
-        fut_players = executor.submit(load_players, engine)
-        fut_events.result()
+        fut_events = executor.submit(load_events, engine) if not skip_events else None
+        fut_teams = executor.submit(load_teams, engine) if not skip_teams else None
+        fut_players = executor.submit(load_players, engine) if not skip_players else None
+        if fut_events:
+            fut_events.result()
         tournaments = fut_tournaments.result()
-        fut_teams.result()
-        fut_players.result()
+        if fut_teams:
+            fut_teams.result()
+        if fut_players:
+            fut_players.result()
     elapsed = time.perf_counter() - t0
     timings.append(("Events + Tournaments + Teams + Players (parallel)", elapsed))
     print(f"  → {_format_elapsed(elapsed)}")

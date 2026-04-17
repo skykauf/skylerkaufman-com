@@ -28,6 +28,9 @@ jobs:
       PYTHONUNBUFFERED: "1"
       DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
       ETL_MAX_WORKERS: "12"
+      ETL_EVENTS_REFRESH_HOURS: "168"
+      ETL_TEAMS_REFRESH_HOURS: "72"
+      ETL_PLAYERS_REFRESH_HOURS: "168"
     defaults:
       run:
         working-directory: fivb-pipeline
