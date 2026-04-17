@@ -45,30 +45,36 @@
     </header>
 
     <main class="volley-main">
-      <section class="volley-history">
-        <div class="volley-tools-head">Saved Chats</div>
-        <div class="volley-history-actions">
-          <button id="newChat" class="volley-auth-btn secondary" type="button">New chat</button>
-        </div>
-        <div id="historyList" class="volley-history-list"></div>
-      </section>
-      <section class="volley-tools">
-        <div class="volley-tools-head">Tool Activity</div>
-        <div id="toolActivity" class="volley-tools-body" aria-live="polite"></div>
-      </section>
-      <div id="thread" class="volley-thread" aria-live="polite"></div>
-      <form id="composer" class="volley-composer">
-        <label class="volley-sr" for="input">Message</label>
-        <textarea
-          id="input"
-          class="volley-input"
-          rows="2"
-          placeholder="Ask anything…"
-          autocomplete="off"
-        ></textarea>
-        <button type="submit" class="volley-send" id="send">Send</button>
-      </form>
-      <p id="status" class="volley-status" role="status"></p>
+      <div class="volley-layout">
+        <aside class="volley-sidebar" aria-label="Chat sidebar">
+          <section class="volley-history">
+            <div class="volley-tools-head">Saved Chats</div>
+            <div class="volley-history-actions">
+              <button id="newChat" class="volley-auth-btn secondary" type="button">New chat</button>
+            </div>
+            <div id="historyList" class="volley-history-list"></div>
+          </section>
+          <section class="volley-tools">
+            <div class="volley-tools-head">Tool Activity</div>
+            <div id="toolActivity" class="volley-tools-body" aria-live="polite"></div>
+          </section>
+        </aside>
+        <section class="volley-chat-panel">
+          <div id="thread" class="volley-thread" aria-live="polite"></div>
+          <form id="composer" class="volley-composer">
+            <label class="volley-sr" for="input">Message</label>
+            <textarea
+              id="input"
+              class="volley-input"
+              rows="2"
+              placeholder="Ask anything…"
+              autocomplete="off"
+            ></textarea>
+            <button type="submit" class="volley-send" id="send">Send</button>
+          </form>
+          <p id="status" class="volley-status" role="status"></p>
+        </section>
+      </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
