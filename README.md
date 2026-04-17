@@ -1,7 +1,7 @@
 # skylerkaufman.com
 
 Personal site with interactive visuals plus **Volley Chat**.  
-Chat supports OpenAI models (preferred for structured tool calling) and Hugging Face router fallback, with built-in Postgres volleyball tools.
+Chat uses ChatGPT with built-in access to FIVB VIS data, with Hugging Face router as fallback.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Chat supports OpenAI models (preferred for structured tool calling) and Hugging 
   - Local dev: `server.js` at `/api/chat` and `/api/bootstrap-supabase`
   - Vercel: `api/chat.js`, `api/bootstrap-supabase.js`
 - LLM: OpenAI (`OPENAI_API_KEY`) or Hugging Face router (`HF_TOKEN`)
-- Tool layer: Postgres-powered volleyball tools via `DATABASE_URL`
+- Tool layer: FIVB VIS-focused volleyball tools (database-backed via `DATABASE_URL`)
 
 ## Quick start (local)
 
