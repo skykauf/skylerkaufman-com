@@ -6,7 +6,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); require('./lib/fivb-profile'); require('./lib/auth-supabase'); require('./lib/chat-history-store'); console.log('verify: ok')\""
+    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); require('./lib/fivb-profile'); require('./lib/fivb-table-explorer'); require('./lib/auth-supabase'); require('./lib/chat-history-store'); console.log('verify: ok')\""
   },
   "dependencies": {
     "express": "^4.21.2",

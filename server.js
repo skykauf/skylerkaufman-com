@@ -3,6 +3,7 @@ const path = require("path");
 const { generateChatReply, runToolSmokeTests } = require("./lib/chat-service");
 const { bootstrapSupabase } = require("./lib/bootstrap-supabase");
 const { getFivbProfile } = require("./lib/fivb-profile");
+const { runFivbTableExplorer } = require("./lib/fivb-table-explorer");
 const { getAuthenticatedUser } = require("./lib/auth-supabase");
 const {
   ensureConversationForUser,
@@ -60,6 +61,21 @@ app.get("/api/fivb-profile", async (req, res) => {
       error: err.message || String(err),
     });
   }
+});
+
+app.post("/api/fivb-table-explorer", async (req, res) => {
+  const action = String(req.body?.action || "");
+  const filters = req.body?.filters || {};
+  const out = await runFivbTableExplorer(action, filters);
+  if (out?.skipped) {
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.status(200).json(out);
+  }
+  if (!out?.ok) {
+    return res.status(400).json(out);
+  }
+  res.setHeader("Cache-Control", "private, no-store");
+  return res.status(200).json(out);
 });
 
 async function handleChatToolsSmoke(req, res) {

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FIVB Table Explorer</title>
+    <meta
+      name="description"
+      content="Explore FIVB player attributes and full match history with interactive filters."
+    />
+    <link rel="stylesheet" href="/fivb-explorer/table-explorer/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Explorer</p>
+        <h1>FIVB Table Explorer</h1>
+        <p class="lede">
+          Filter player attributes like height/weight, then open a full match and ELO history.
+        </p>
+        <p class="actions">
+          <a href="/fivb-explorer/" class="link">Back to Summary</a>
+          <a href="/" class="link">Back Home</a>
+        </p>
+        <p id="status" class="status">Ready.</p>
+      </header>
+
+      <section class="card">
+        <h2>Player Filters</h2>
+        <form id="playerSearchForm" class="filters-grid">
+          <label>Player Name <input id="name" type="text" placeholder="Kristen Nuss" /></label>
+          <label>Country <input id="country" type="text" maxlength="3" placeholder="USA" /></label>
+          <label>Gender <input id="gender" type="text" placeholder="0 or 1" /></label>
+          <label>Min Height (cm) <input id="minHeight" type="number" /></label>
+          <label>Max Height (cm) <input id="maxHeight" type="number" /></label>
+          <label>Min Weight (kg) <input id="minWeight" type="number" step="0.1" /></label>
+          <label>Max Weight (kg) <input id="maxWeight" type="number" step="0.1" /></label>
+          <label>Rows <input id="limit" type="number" min="1" max="200" value="50" /></label>
+          <div class="button-row">
+            <button type="submit">Search Players</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Players</h2>
+        <div id="players"></div>
+      </section>
+
+      <section class="card">
+        <h2>Player History</h2>
+        <form id="historyForm" class="history-row">
+          <label>Player ID <input id="historyPlayerId" type="number" placeholder="100273" /></label>
+          <label>or Name <input id="historyPlayerName" type="text" placeholder="Barbra Fontana" /></label>
+          <label>Matches Limit <input id="historyLimit" type="number" min="1" max="1000" value="250" /></label>
+          <div class="button-row"><button type="submit">Load History</button></div>
+        </form>
+        <div id="playerProfile"></div>
+        <div class="grid">
+          <article>
+            <h3>Matches</h3>
+            <div id="matches"></div>
+          </article>
+          <article>
+            <h3>ELO History</h3>
+            <div id="elo"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script src="/fivb-explorer/table-explorer/page.js" defer></script>
+  </body>
+</html>

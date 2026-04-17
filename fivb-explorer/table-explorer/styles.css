@@ -21,13 +21,9 @@ body {
 }
 
 .page {
-  width: min(1080px, 100%);
+  width: min(1200px, 100%);
   margin: 0 auto;
   padding: 2rem 1rem 3rem;
-}
-
-.hero {
-  margin-bottom: 1.25rem;
 }
 
 .eyebrow {
@@ -48,14 +44,12 @@ h1 {
 .lede {
   color: var(--muted);
   margin: 0.8rem 0 0;
-  max-width: 68ch;
 }
 
 .actions {
   margin: 1rem 0 0;
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  gap: 0.6rem;
 }
 
 .link,
@@ -66,7 +60,7 @@ button {
   padding: 0.45rem 0.8rem;
   border-radius: 8px;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 button {
@@ -75,7 +69,7 @@ button {
 
 .status {
   color: var(--muted);
-  min-height: 1.5rem;
+  min-height: 1.4rem;
 }
 
 .card {
@@ -86,31 +80,69 @@ button {
   margin-top: 1rem;
 }
 
+h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  color: #ddd6ca;
+}
+
+h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  color: #ddd6ca;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: #d8cfbf;
+}
+
+input {
+  border: 1px solid var(--border);
+  background: #10131a;
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+.button-row {
+  align-self: end;
+}
+
 .grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-h2 {
-  margin: 0 0 0.7rem;
-  font-size: 1rem;
-  color: #ddd6ca;
-  letter-spacing: 0.02em;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 th,
 td {
   text-align: left;
-  padding: 0.42rem 0.45rem;
+  padding: 0.38rem 0.4rem;
   border-bottom: 1px solid #2a2a32;
-  vertical-align: top;
 }
 
 th {
