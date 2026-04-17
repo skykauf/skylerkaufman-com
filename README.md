@@ -1,7 +1,7 @@
 # skylerkaufman.com
 
 Personal site with interactive visuals plus **Volley Chat**.  
-Chat now uses a hosted open-source LLM (Hugging Face Inference API) and includes a Postgres tool-calling skeleton (`query_db`) compatible with MCP-style patterns.
+Chat supports OpenAI models (preferred for structured tool calling) and Hugging Face router fallback, with built-in Postgres volleyball tools.
 
 ## Architecture
 
@@ -9,8 +9,8 @@ Chat now uses a hosted open-source LLM (Hugging Face Inference API) and includes
 - Chat API:
   - Local dev: `server.js` at `/api/chat` and `/api/bootstrap-supabase`
   - Vercel: `api/chat.js`, `api/bootstrap-supabase.js`
-- LLM: Hugging Face hosted OSS model (`HF_MODEL`)
-- Tool layer: optional Postgres query tool via `DATABASE_URL`
+- LLM: OpenAI (`OPENAI_API_KEY`) or Hugging Face router (`HF_TOKEN`)
+- Tool layer: Postgres-powered volleyball tools via `DATABASE_URL`
 
 ## Quick start (local)
 
@@ -25,7 +25,10 @@ Open [http://localhost:3000](http://localhost:3000), then click the ringed **Vol
 
 Use `.env.example` as reference:
 
-- `HF_TOKEN` (required) - Hugging Face access token
+- `OPENAI_API_KEY` (optional, preferred) - enables OpenAI chat + structured function calling
+- `OPENAI_MODEL` (optional) - defaults to `gpt-4.1-mini`
+- `OPENAI_BASE_URL` (optional) - defaults to `https://api.openai.com/v1`
+- `HF_TOKEN` (optional fallback) - Hugging Face access token
 - `HF_MODEL` (optional) - defaults to `meta-llama/Meta-Llama-3-8B-Instruct`
 - `HF_API_URL` (optional) - defaults to `https://router.huggingface.co/v1` (router chat API; plain `https://router.huggingface.co` is auto-suffixed with `/v1`)
 - `DATABASE_URL` (optional) - enables `query_db`, automatic Supabase schema bootstrap on the home page, and the scheduled FIVB job (duplicate this value into GitHub Actions secrets for the workflow)
@@ -41,10 +44,14 @@ The chat page calls `/api/chat`, which resolves to the Vercel function in produc
 
 ## Notes on tool-calling
 
-The backend uses a lightweight MCP-style loop:
-1. LLM first pass can emit `{"tool":"query_db","sql":"..."}`.
-2. Backend validates read-only SQL and executes against Postgres.
-3. Tool result is fed back to the model for final response.
+The backend supports structured tools including:
+- `top_players_by_country`
+- `best_finishes_by_player`
+- `player_recent_matches`
+- `country_matchup_record`
+- `query_db` (safe read-only SQL fallback)
+
+OpenAI is used first when `OPENAI_API_KEY` is set; otherwise the app falls back to the Hugging Face JSON tool-call loop.
 
 For safety, only `SELECT`/`WITH` read-only SQL is allowed in this skeleton.
 
