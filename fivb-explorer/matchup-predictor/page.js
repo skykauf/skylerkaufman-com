@@ -9,11 +9,13 @@
     a2: document.getElementById("playerA2"),
     b1: document.getElementById("playerB1"),
     b2: document.getElementById("playerB2"),
+    genderPool: document.getElementById("genderPool"),
     recentWindow: document.getElementById("recentWindow"),
   };
 
   const playerCache = new Map();
   const suggestionCache = new Map();
+  const directoryCache = new Map();
   let calibrationPromise = null;
   let suggestionTimer = 0;
 
@@ -320,7 +322,7 @@
     return { name: value };
   }
 
-  async function resolvePlayer(rawInput) {
+  async function resolvePlayer(rawInput, genderPool) {
     const parsed = normalizePlayerInput(rawInput);
     if (!parsed) throw new Error("Each player field must be filled.");
 
@@ -337,7 +339,11 @@
       if (!out.profile) throw new Error(`Could not find player with ID ${parsed.id}.`);
       resolved = out;
     } else {
-      const search = await callExplorer("search_players", { name: parsed.name, limit: 1 });
+      const search = await callExplorer("search_players", {
+        name: parsed.name,
+        gender: genderPool,
+        limit: 1,
+      });
       const top = search.rows && search.rows[0];
       if (!top || !top.player_id) throw new Error(`No player found for "${parsed.name}".`);
       resolved = await callExplorer("player_history", { player_id: top.player_id, history_limit: 25 });
@@ -354,16 +360,36 @@
   async function refreshSuggestions(query) {
     const q = String(query || "").trim();
     if (q.length < 2) return;
-    if (suggestionCache.has(q)) {
-      renderSuggestions(suggestionCache.get(q));
+    const genderPool = fields.genderPool?.value || "0";
+    const key = `${genderPool}:${q}`;
+    if (suggestionCache.has(key)) {
+      renderSuggestions(suggestionCache.get(key));
       return;
     }
     try {
-      const out = await callExplorer("search_players", { name: q, limit: 8 });
-      suggestionCache.set(q, out.rows || []);
+      const out = await callExplorer("search_players", { name: q, gender: genderPool, limit: 20 });
+      suggestionCache.set(key, out.rows || []);
       renderSuggestions(out.rows || []);
     } catch (_) {
       // Keep silent to avoid status flicker while typing.
+    }
+  }
+
+  async function loadPlayerDirectory(genderPool) {
+    const pool = String(genderPool || "0");
+    if (directoryCache.has(pool)) {
+      renderSuggestions(directoryCache.get(pool));
+      return;
+    }
+    statusEl.textContent = "Loading player dropdown...";
+    try {
+      const out = await callExplorer("player_directory", { gender: pool, limit: 50000 });
+      const rows = Array.isArray(out.rows) ? out.rows : [];
+      directoryCache.set(pool, rows);
+      renderSuggestions(rows);
+      statusEl.textContent = `Loaded ${rows.length.toLocaleString("en-US")} players for dropdown.`;
+    } catch (err) {
+      statusEl.textContent = err.message || "Failed to load player dropdown.";
     }
   }
 
@@ -424,10 +450,11 @@
     try {
       const calibration = await getCalibration();
       const recentWindow = clamp(toNum(fields.recentWindow.value, 12), 3, 40);
-      const pA1 = await resolvePlayer(fields.a1.value);
-      const pA2 = await resolvePlayer(fields.a2.value);
-      const pB1 = await resolvePlayer(fields.b1.value);
-      const pB2 = await resolvePlayer(fields.b2.value);
+      const genderPool = fields.genderPool?.value || "0";
+      const pA1 = await resolvePlayer(fields.a1.value, genderPool);
+      const pA2 = await resolvePlayer(fields.a2.value, genderPool);
+      const pB1 = await resolvePlayer(fields.b1.value, genderPool);
+      const pB2 = await resolvePlayer(fields.b2.value, genderPool);
 
       const ids = [
         pA1.profile.player_id,
@@ -486,7 +513,12 @@
 
   predictFormEl?.addEventListener("submit", runPrediction);
   bindSuggestionInputs();
-  if (predictFormEl) {
-    runPrediction({ preventDefault() {} });
-  }
+  fields.genderPool?.addEventListener("change", () => {
+    loadPlayerDirectory(fields.genderPool.value);
+  });
+  loadPlayerDirectory(fields.genderPool?.value || "0").finally(() => {
+    if (predictFormEl) {
+      runPrediction({ preventDefault() {} });
+    }
+  });
 })();
