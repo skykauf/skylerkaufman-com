@@ -519,6 +519,25 @@
     return map;
   }
 
+  function aggregateSetMargins(distribution, setIndex) {
+    const map = new Map();
+    let totalProb = 0;
+    for (const row of distribution || []) {
+      const sets = String(row.score || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (setIndex >= sets.length) continue;
+      const m = sets[setIndex].match(/(\d+)\s*-\s*(\d+)/);
+      if (!m) continue;
+      const margin = Number(m[1]) - Number(m[2]);
+      const p = toNum(row.prob, 0);
+      map.set(margin, (map.get(margin) || 0) + p);
+      totalProb += p;
+    }
+    return { marginMap: map, totalProb };
+  }
+
   function bucketMargins(marginMap, bucketSize = 2) {
     const map = new Map();
     marginMap.forEach((prob, margin) => {
@@ -658,6 +677,46 @@
       .reduce((sum, row) => sum + toNum(row.prob, 0), 0);
     const marginSvg = buildMarginChartSvg(marginBins, expectedMargin);
 
+    const set1 = aggregateSetMargins(model.distribution || [], 0);
+    const set2 = aggregateSetMargins(model.distribution || [], 1);
+    const set3 = aggregateSetMargins(model.distribution || [], 2);
+
+    function renderSetPanel(title, setAgg) {
+      const bins = bucketMargins(setAgg.marginMap, 2);
+      const total = Math.max(setAgg.totalProb, 0);
+      if (!bins.length || total <= 0) {
+        return `
+          <div class="set-panel">
+            <h4>${esc(title)}</h4>
+            <p class="muted">No outcomes in current distribution.</p>
+          </div>
+        `;
+      }
+      const condExpected =
+        Array.from(setAgg.marginMap.entries()).reduce((sum, [m, p]) => sum + Number(m) * toNum(p, 0), 0) / total;
+      const teamASetWin =
+        Array.from(setAgg.marginMap.entries())
+          .filter(([m]) => Number(m) > 0)
+          .reduce((sum, [, p]) => sum + toNum(p, 0), 0) / total;
+      const closeZone =
+        Array.from(setAgg.marginMap.entries())
+          .filter(([m]) => Math.abs(Number(m)) <= 2)
+          .reduce((sum, [, p]) => sum + toNum(p, 0), 0) / total;
+      const svg = buildMarginChartSvg(bins, condExpected);
+      return `
+        <div class="set-panel">
+          <h4>${esc(title)}</h4>
+          <div class="set-panel-meta">
+            <span>Played in: <strong>${pct(total)}</strong></span>
+            <span>Team A set win: <strong>${pct(teamASetWin)}</strong></span>
+            <span>E[set margin]: <strong>${condExpected.toFixed(1)}</strong></span>
+            <span>Close zone (-2 to +2): <strong>${pct(closeZone)}</strong></span>
+          </div>
+          <div class="margin-chart-wrap">${svg}</div>
+        </div>
+      `;
+    }
+
     predictionResultsEl.innerHTML = `
       <div class="kpis">
         <div class="kpi">
@@ -692,6 +751,12 @@
       <p class="muted">
         Left of zero indicates Team B-leaning outcomes. Right of zero indicates Team A-leaning outcomes.
       </p>
+      <h3 class="outcome-title">Set-level margin distributions</h3>
+      <div class="set-grid">
+        ${renderSetPanel("Set 1", set1)}
+        ${renderSetPanel("Set 2", set2)}
+        ${renderSetPanel("Set 3 (if played)", set3)}
+      </div>
       <h3 class="outcome-title">Top exact score outcomes</h3>
       <div class="outcome-chart">${chartRows}</div>
     `;

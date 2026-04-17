@@ -228,6 +228,39 @@ input {
   display: block;
 }
 
+.set-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.set-panel {
+  border: 1px solid #2a2a36;
+  border-radius: 10px;
+  background: rgba(16, 18, 28, 0.42);
+  padding: 0.6rem;
+}
+
+.set-panel h4 {
+  margin: 0 0 0.35rem;
+  color: #dfd6ff;
+  font-size: 0.86rem;
+}
+
+.set-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-bottom: 0.42rem;
+}
+
+.set-panel-meta strong {
+  color: #ece7ff;
+}
+
 .outcome-chart {
   display: grid;
   gap: 0.48rem;
