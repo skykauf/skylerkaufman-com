@@ -16,7 +16,7 @@
         <p class="eyebrow">Explorer</p>
         <h1>FIVB Table Explorer</h1>
         <p class="lede">
-          Filter players by name/country/gender, then open a full match and ELO history.
+          Load a player by ID or name, then explore full match and ELO history.
         </p>
         <p class="actions">
           <a href="/fivb-explorer/" class="link">Back to Summary</a>
@@ -26,34 +26,9 @@
       </header>
 
       <section class="card">
-        <h2>Player Filters</h2>
-        <form id="playerSearchForm" class="filters-grid">
-          <label>Player Name <input id="name" type="text" placeholder="Kristen Nuss" /></label>
-          <label>Country <input id="country" type="text" maxlength="3" placeholder="USA" /></label>
-          <label>
-            Gender
-            <select id="gender">
-              <option value="" selected>Either</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          </label>
-          <label>Rows <input id="limit" type="number" min="1" max="200" value="50" /></label>
-          <div class="button-row">
-            <button type="submit">Search Players</button>
-          </div>
-        </form>
-      </section>
-
-      <section class="card">
-        <h2>Players</h2>
-        <div id="players"></div>
-      </section>
-
-      <section class="card">
         <h2>Player History</h2>
         <form id="historyForm" class="history-row">
-          <label>Player ID <input id="historyPlayerId" type="number" placeholder="100273" /></label>
+          <label>Player ID <input id="historyPlayerId" type="text" placeholder="100273" /></label>
           <label>or Name <input id="historyPlayerName" type="text" placeholder="Barbra Fontana" /></label>
           <label>Matches Limit <input id="historyLimit" type="number" min="1" max="1000" value="250" /></label>
           <div class="button-row"><button type="submit">Load History</button></div>
