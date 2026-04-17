@@ -236,27 +236,33 @@
       {
         score: `${makeSetScore(21, aOppStrong, false)}, ${makeSetScore(21, aOppMedium, false)}`,
         prob: a20 * regularShare * 0.6,
+        bucket: "win_2",
       },
       {
         score: `${makeSetScore(21, aOppClose, false)}, ${makeSetScore(21, aOppMedium, false)}`,
         prob: a20 * regularShare * 0.4,
+        bucket: "win_2",
       },
       {
         score: `${makeSetScore(21, aOverLose, true)}, ${makeSetScore(21, aOverLose, true)} (overtime win Team A)`,
         prob: a20 * overtimeShare,
+        bucket: "win_2",
       },
 
       {
         score: `${makeSetScore(21, aOppClose, false)}, ${aOppClose}-21, ${makeSetScore(15, deciderA, false)}`,
         prob: a21 * regularShare * 0.55,
+        bucket: "win_3",
       },
       {
         score: `${aOppClose}-21, ${makeSetScore(21, aOppClose, false)}, ${makeSetScore(15, deciderA, false)}`,
         prob: a21 * regularShare * 0.45,
+        bucket: "win_3",
       },
       {
         score: `${makeSetScore(21, aOverLose, true)}, ${aOppClose}-21, ${makeSetScore(15, deciderAOver, true)} (overtime win Team A)`,
         prob: a21 * overtimeShare,
+        bucket: "win_3",
       },
 
       {
@@ -264,12 +270,14 @@
           makeSetScore(15, deciderB, false)
         )}`,
         prob: b21 * regularShare * 0.45,
+        bucket: "lose_3",
       },
       {
         score: `${makeSetScore(21, bOppClose, false)}, ${flipScore(makeSetScore(21, bOppClose, false))}, ${flipScore(
           makeSetScore(15, deciderB, false)
         )}`,
         prob: b21 * regularShare * 0.55,
+        bucket: "lose_3",
       },
       {
         score: `${flipScore(makeSetScore(21, bOverLose, true))}, ${makeSetScore(
@@ -278,21 +286,25 @@
           false
         )}, ${flipScore(makeSetScore(15, deciderBOver, true))} (overtime win Team B)`,
         prob: b21 * overtimeShare,
+        bucket: "lose_3",
       },
 
       {
         score: `${bOppMedium}-21, ${bOppStrong}-21`,
         prob: b20 * regularShare * 0.6,
+        bucket: "lose_2",
       },
       {
         score: `${bOppMedium}-21, ${bOppClose}-21`,
         prob: b20 * regularShare * 0.4,
+        bucket: "lose_2",
       },
       {
         score: `${flipScore(makeSetScore(21, bOverLose, true))}, ${flipScore(
           makeSetScore(21, bOverLose, true)
         )} (overtime win Team B)`,
         prob: b20 * overtimeShare,
+        bucket: "lose_2",
       },
     ];
 
@@ -406,8 +418,48 @@
   }
 
   function renderResult(model) {
-    const distRows = model.distribution
-      .map((row) => `<tr><td>${esc(row.score)}</td><td>${pct(row.prob)}</td></tr>`)
+    const sorted = [...(model.distribution || [])].sort((a, b) => toNum(b.prob) - toNum(a.prob));
+    const topRows = sorted.slice(0, 12);
+    const maxProb = Math.max(...topRows.map((row) => toNum(row.prob, 0)), 0.001);
+    let cumulative = 0;
+    const chartRows = topRows
+      .map((row) => {
+        const p = toNum(row.prob, 0);
+        cumulative += p;
+        const widthPct = (p / maxProb) * 100;
+        return `
+          <div class="outcome-row">
+            <div class="outcome-topline">
+              <span class="outcome-score">${esc(row.score)}</span>
+              <span class="outcome-prob">${pct(p)}</span>
+            </div>
+            <div class="outcome-bar-track">
+              <div class="outcome-bar-fill" style="width:${widthPct.toFixed(2)}%"></div>
+            </div>
+            <div class="outcome-cumulative">Cumulative: ${pct(cumulative)}</div>
+          </div>
+        `;
+      })
+      .join("");
+
+    const bucketMap = {
+      win_2: "Team A win in 2 sets",
+      win_3: "Team A win in 3 sets",
+      lose_3: "Team B win in 3 sets",
+      lose_2: "Team B win in 2 sets",
+    };
+    const bucketHtml = Object.entries(bucketMap)
+      .map(([k, label]) => {
+        const prob = (model.distribution || [])
+          .filter((row) => row.bucket === k)
+          .reduce((sum, row) => sum + toNum(row.prob, 0), 0);
+        return `
+          <div class="bucket-item">
+            <div class="bucket-label">${esc(label)}</div>
+            <div class="bucket-value">${pct(prob)}</div>
+          </div>
+        `;
+      })
       .join("");
 
     predictionResultsEl.innerHTML = `
@@ -433,12 +485,9 @@
         Effective rating = average career Elo + recent-form adjustment (win rate, set differential,
         and Elo trend over the selected recent-match window).
       </p>
-      <table>
-        <thead>
-          <tr><th>Likely final score</th><th>Probability</th></tr>
-        </thead>
-        <tbody>${distRows}</tbody>
-      </table>
+      <div class="bucket-grid">${bucketHtml}</div>
+      <h3 class="outcome-title">Likely final score outcomes (horizontal chart)</h3>
+      <div class="outcome-chart">${chartRows}</div>
     `;
   }
 

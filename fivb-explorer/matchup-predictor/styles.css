@@ -169,6 +169,88 @@ input {
   color: #f4efff;
 }
 
+.bucket-grid {
+  margin: 0.7rem 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.55rem;
+}
+
+.bucket-item {
+  border: 1px solid #2f2f3f;
+  border-radius: 10px;
+  background: rgba(16, 18, 28, 0.55);
+  padding: 0.5rem 0.6rem;
+}
+
+.bucket-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.bucket-value {
+  margin-top: 0.15rem;
+  color: #f4efff;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.outcome-title {
+  margin: 0.55rem 0 0.45rem;
+  font-size: 0.92rem;
+  color: #dfd6ff;
+}
+
+.outcome-chart {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.outcome-row {
+  border: 1px solid #2a2a36;
+  border-radius: 10px;
+  background: rgba(16, 18, 28, 0.5);
+  padding: 0.45rem 0.55rem;
+}
+
+.outcome-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.outcome-score {
+  font-size: 0.83rem;
+  color: #ece7ff;
+}
+
+.outcome-prob {
+  font-size: 0.81rem;
+  color: #ddd6ff;
+  font-weight: 600;
+}
+
+.outcome-bar-track {
+  margin-top: 0.3rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #121622;
+  border: 1px solid #292d3f;
+  overflow: hidden;
+}
+
+.outcome-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6f79d8, #a2b0ff);
+}
+
+.outcome-cumulative {
+  margin-top: 0.26rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
