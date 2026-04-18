@@ -168,7 +168,7 @@
       edge: [36, 62, 56],
       rim: [145, 198, 182],
       href: "/fivb-explorer/",
-      label: "Data Explorer",
+      label: "FIVB Explorer",
     });
     planets.push({
       relX: small ? 0.78 : 0.62,
