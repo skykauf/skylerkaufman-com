@@ -2,6 +2,16 @@
   const canvas = document.getElementById("bg");
   if (!canvas) return;
 
+  /** Planet hit targets navigate only on `/` so inner apps stay clickable. */
+  function cosmicNavEnabled() {
+    try {
+      const p = window.location.pathname;
+      return p === "/" || p === "";
+    } catch {
+      return false;
+    }
+  }
+
   const ctx = canvas.getContext("2d");
   const reduced =
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -477,6 +487,14 @@
   function onMove(e) {
     targetMx = e.clientX;
     targetMy = e.clientY;
+    if (!cosmicNavEnabled()) {
+      if (hoverProjectHref !== null) {
+        hoverProjectHref = null;
+        document.body.style.cursor = "";
+        if (reduced) redrawStaticScene();
+      }
+      return;
+    }
     const hit = projectPlanetAt(e.clientX, e.clientY);
     const nextHref = hit?.href ?? null;
     if (nextHref !== hoverProjectHref) {
@@ -494,6 +512,7 @@
   }
 
   function onClick(e) {
+    if (!cosmicNavEnabled()) return;
     const hit = projectPlanetAt(e.clientX, e.clientY);
     if (hit?.href) {
       window.location.href = hit.href;

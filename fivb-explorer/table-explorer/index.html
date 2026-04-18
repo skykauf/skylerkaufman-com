@@ -8,9 +8,11 @@
       name="description"
       content="Explore FIVB player attributes and full match history with interactive filters."
     />
+    <link rel="stylesheet" href="/site-cosmic.css" />
     <link rel="stylesheet" href="/fivb-explorer/table-explorer/styles.css" />
   </head>
-  <body>
+  <body class="cosmic-site">
+    <canvas id="bg" aria-hidden="true"></canvas>
     <main class="page">
       <header class="hero">
         <p class="eyebrow">Explorer</p>
@@ -39,6 +41,7 @@
       </section>
     </main>
 
+    <script src="/visuals.js" defer></script>
     <script src="/fivb-explorer/table-explorer/page.js" defer></script>
   </body>
 </html>

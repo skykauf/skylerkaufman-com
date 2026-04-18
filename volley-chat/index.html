@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Volley Chat — Skyler Kaufman</title>
     <meta name="description" content="ChatGPT with built-in access to FIVB VIS data" />
+    <link rel="stylesheet" href="/site-cosmic.css" />
     <link rel="stylesheet" href="/volley-chat/volley.css" />
   </head>
-  <body class="volley-page">
+  <body class="volley-page cosmic-site">
+    <canvas id="bg" aria-hidden="true"></canvas>
     <header class="volley-header">
       <a class="volley-back" href="/">← Home</a>
       <h1 class="volley-title">Volley Chat</h1>
@@ -85,6 +87,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/visuals.js" defer></script>
     <script src="/volley-chat/volley.js" defer></script>
   </body>
 </html>

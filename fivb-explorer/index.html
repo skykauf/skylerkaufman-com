@@ -8,9 +8,11 @@
       name="description"
       content="Quick profile of Supabase FIVB data freshness and quality."
     />
+    <link rel="stylesheet" href="/site-cosmic.css" />
     <link rel="stylesheet" href="/fivb-explorer/styles.css" />
   </head>
-  <body>
+  <body class="cosmic-site">
+    <canvas id="bg" aria-hidden="true"></canvas>
     <main class="page">
       <header class="hero">
         <p class="eyebrow">Another Planet</p>
@@ -56,6 +58,7 @@
       </section>
     </main>
 
+    <script src="/visuals.js" defer></script>
     <script src="/fivb-explorer/page.js" defer></script>
   </body>
 </html>
