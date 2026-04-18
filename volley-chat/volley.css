@@ -229,7 +229,25 @@ body.volley-page {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.volley-explorer-section {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
   gap: 0.4rem;
+}
+
+.volley-explorer-section-title {
+  margin: 0;
+  padding: 0 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
 }
 
 .volley-explorer-tool {

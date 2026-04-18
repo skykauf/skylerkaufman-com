@@ -570,6 +570,47 @@
     });
   }
 
+  function createToolDetailsEl(t) {
+    const details = document.createElement("details");
+    details.className = "volley-explorer-tool";
+    const summary = document.createElement("summary");
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "volley-explorer-name";
+    nameSpan.textContent = t.name || "(unnamed)";
+    summary.appendChild(nameSpan);
+    details.appendChild(summary);
+    const desc = document.createElement("p");
+    desc.className = "volley-explorer-desc";
+    desc.textContent = t.description || "No description.";
+    details.appendChild(desc);
+    const params = Array.isArray(t.parameters) ? t.parameters : [];
+    if (params.length > 0) {
+      const ul = document.createElement("ul");
+      ul.className = "volley-explorer-params";
+      params.forEach((p) => {
+        const li = document.createElement("li");
+        const line = document.createElement("span");
+        line.className = "volley-explorer-param-meta";
+        const nm = document.createElement("span");
+        nm.className = "volley-explorer-param-name";
+        nm.textContent = p.name;
+        line.appendChild(nm);
+        const reqLabel = p.required ? ", required" : ", optional";
+        line.appendChild(document.createTextNode(` — ${p.type || "unknown"}${reqLabel}`));
+        li.appendChild(line);
+        if (p.description) {
+          const pd = document.createElement("span");
+          pd.className = "volley-explorer-param-desc";
+          pd.textContent = p.description;
+          li.appendChild(pd);
+        }
+        ul.appendChild(li);
+      });
+      details.appendChild(ul);
+    }
+    return details;
+  }
+
   async function loadToolsExplorer() {
     if (!toolsExplorerBodyEl) return;
     toolsExplorerBodyEl.className = "volley-tools-explorer-body volley-tools-explorer-loading";
@@ -589,49 +630,29 @@
           "Could not load the tools list. Deploy the latest code with /api/chat-tools or run the local server.";
         return;
       }
-      const tools = Array.isArray(data.tools) ? data.tools : [];
       toolsExplorerBodyEl.className = "volley-tools-explorer-body";
       toolsExplorerBodyEl.innerHTML = "";
-      tools.forEach((t) => {
-        const details = document.createElement("details");
-        details.className = "volley-explorer-tool";
-        const summary = document.createElement("summary");
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "volley-explorer-name";
-        nameSpan.textContent = t.name || "(unnamed)";
-        summary.appendChild(nameSpan);
-        details.appendChild(summary);
-        const desc = document.createElement("p");
-        desc.className = "volley-explorer-desc";
-        desc.textContent = t.description || "No description.";
-        details.appendChild(desc);
-        const params = Array.isArray(t.parameters) ? t.parameters : [];
-        if (params.length > 0) {
-          const ul = document.createElement("ul");
-          ul.className = "volley-explorer-params";
-          params.forEach((p) => {
-            const li = document.createElement("li");
-            const line = document.createElement("span");
-            line.className = "volley-explorer-param-meta";
-            const nm = document.createElement("span");
-            nm.className = "volley-explorer-param-name";
-            nm.textContent = p.name;
-            line.appendChild(nm);
-            const reqLabel = p.required ? ", required" : ", optional";
-            line.appendChild(document.createTextNode(` — ${p.type || "unknown"}${reqLabel}`));
-            li.appendChild(line);
-            if (p.description) {
-              const pd = document.createElement("span");
-              pd.className = "volley-explorer-param-desc";
-              pd.textContent = p.description;
-              li.appendChild(pd);
-            }
-            ul.appendChild(li);
+      const sections = Array.isArray(data.sections) ? data.sections : [];
+      if (sections.length > 0) {
+        sections.forEach((sec) => {
+          const wrap = document.createElement("section");
+          wrap.className = "volley-explorer-section";
+          const h = document.createElement("h3");
+          h.className = "volley-explorer-section-title";
+          h.textContent = sec.title || "Tools";
+          wrap.appendChild(h);
+          const list = Array.isArray(sec.tools) ? sec.tools : [];
+          list.forEach((t) => {
+            wrap.appendChild(createToolDetailsEl(t));
           });
-          details.appendChild(ul);
-        }
-        toolsExplorerBodyEl.appendChild(details);
-      });
+          toolsExplorerBodyEl.appendChild(wrap);
+        });
+      } else {
+        const tools = Array.isArray(data.tools) ? data.tools : [];
+        tools.forEach((t) => {
+          toolsExplorerBodyEl.appendChild(createToolDetailsEl(t));
+        });
+      }
     } catch (e) {
       toolsExplorerBodyEl.className = "volley-tools-explorer-body volley-tools-explorer-error";
       toolsExplorerBodyEl.textContent = `Could not load tools: ${e.message || String(e)}`;
