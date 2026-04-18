@@ -66,7 +66,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$E_1 = \frac{1}{1 + 10^{(\text{team\_elo}_2 - \text{team\_elo}_1)/400}}$$
+              $$\begin{aligned}
+              E_1 &= \frac{1}{1 + 10^{d/400}} \\
+              d &= \text{team\_elo}_2 - \text{team\_elo}_1
+              \end{aligned}$$
             </div>
           </div>
           <div class="eq-row">
@@ -111,7 +114,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\Delta\text{Team}_1 = K \times \text{round\_w} \times \text{tournament\_w} \times (S_1 - E_1)$$
+              $$\begin{aligned}
+              \Delta\text{Team}_1 = {}&K \times \text{round\_w} \times \text{tournament\_w} \\
+              &\quad \times (S_1 - E_1)
+              \end{aligned}$$
               <p class="eq-foot muted">
                 round_w: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0.
                 tournament_w = first-place points ÷ 200; when missing, assume 20 points (20 ÷ 200).
@@ -142,7 +148,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{recent\_form} = (\text{win\_rate},\,\text{avg\_set\_diff},\,\text{elo\_trend})$$
+              $$\begin{aligned}
+              \text{recent\_form} = (\,&\text{win\_rate},\,\text{avg\_set\_diff}, \\
+              &\text{elo\_trend})
+              \end{aligned}$$
             </div>
           </div>
           <div class="eq-row">
@@ -156,7 +165,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{form\_points} = 110(\text{win\_rate} - 0.5) + 38\cdot\text{avg\_set\_diff} + 0.2\cdot\text{elo\_trend}$$
+              $$\begin{aligned}
+              \text{form\_points} = {}&110(\text{win\_rate} - 0.5) + 38\cdot\text{avg\_set\_diff} \\
+              &\quad + 0.2\cdot\text{elo\_trend}
+              \end{aligned}$$
             </div>
           </div>
           <div class="eq-row">
@@ -185,7 +197,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$P(A) = \frac{1}{1 + 10^{(\text{rating}_B - \text{rating}_A)/400}}$$
+              $$\begin{aligned}
+              P(A) &= \frac{1}{1 + 10^{g/400}} \\
+              g &= \text{rating}_B - \text{rating}_A
+              \end{aligned}$$
             </div>
           </div>
         </div>
