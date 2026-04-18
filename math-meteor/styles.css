@@ -569,3 +569,17 @@
     margin-inline: -0.15rem;
   }
 }
+
+.math-meteor .mm-score-lines__note {
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(232, 165, 75, 0.12);
+  max-width: 62ch;
+  font-size: 0.88rem;
+  line-height: 1.58;
+}
+
+.math-meteor .mm-score-lines__note strong {
+  color: #c9c2b6;
+  font-weight: 600;
+}
