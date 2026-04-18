@@ -186,7 +186,7 @@ models:
       - name: played_at
       - name: tournament_start_date
       - name: tournament_first_place_points
-        description: "FIVB points for winning this event (dim_tournaments.first_place_points). Used to scale clutchness Elo; null treated as neutral in Python."
+        description: "FIVB points for winning this event (dim_tournaments.first_place_points). Used to scale clutchness Elo; when null or non-positive, elo_compute.py assumes 20 points vs reference 200."
       - name: tournament_gender
       - name: team1_player_a_id
       - name: team1_player_b_id

@@ -125,7 +125,7 @@ The **schema** of the Elo output table should look like:
 - One row per **player per match played** (i.e. after each match, append four rows—one per player). “Across time” = many rows per player, ordered by `as_of_date`.
 - **Latest rating** = per (player_id, gender) take the row with max(as_of_date).
 
-**Clutchness Elo** (`player_elo_clutchness_history`): same loop and schema, but each match scales \(K\) by a **round weight** (final vs pool, etc.) and by **tournament strength** — FIVB points for 1st place at that event (`dim_tournaments.first_place_points` on `elo_match_feed`), normalized to a reference value in `scripts/elo_compute.py`. Missing points are treated as neutral (multiplier 1.0).
+**Clutchness Elo** (`player_elo_clutchness_history`): same loop and schema, but each match scales \(K\) by a **round weight** (final vs pool, etc.) and by **tournament strength** — FIVB points for 1st place at that event (`dim_tournaments.first_place_points` on `elo_match_feed`), normalized by `REFERENCE_FIRST_PLACE_POINTS` in `scripts/elo_compute.py`. When points are missing or non-positive, the script assumes **20** points for that multiplier.
 
 ---
 

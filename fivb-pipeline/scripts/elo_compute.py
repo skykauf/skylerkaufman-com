@@ -43,8 +43,10 @@ ROUND_WEIGHT_RO16 = 1.1
 ROUND_WEIGHT_POOL = 0.75
 ROUND_WEIGHT_DEFAULT = 1.0
 
-# Normalize VIS first-place team points to ~1.0 at a typical elite event (tune if needed).
-REFERENCE_FIRST_PLACE_POINTS = 800.0
+# Tournament strength for clutchness: weight = effective_first_place_points / REFERENCE_FIRST_PLACE_POINTS.
+REFERENCE_FIRST_PLACE_POINTS = 200.0
+# When VIS omits first-place points, assume this many points for the multiplier (20/200 = 0.1 vs a 200-pt reference win).
+DEFAULT_FIRST_PLACE_POINTS_WHEN_MISSING = 20.0
 
 
 def round_weight(
@@ -72,14 +74,14 @@ def round_weight(
 
 def tournament_points_weight(first_place_points) -> float:
     """Scale by event importance using FIVB points for winning the tournament (dim_tournaments.first_place_points)."""
-    if first_place_points is None:
-        return 1.0
-    try:
-        fp = float(first_place_points)
-    except (TypeError, ValueError):
-        return 1.0
-    if fp <= 0:
-        return 1.0
+    fp: float | None = None
+    if first_place_points is not None:
+        try:
+            fp = float(first_place_points)
+        except (TypeError, ValueError):
+            fp = None
+    if fp is None or fp <= 0:
+        fp = DEFAULT_FIRST_PLACE_POINTS_WHEN_MISSING
     return fp / REFERENCE_FIRST_PLACE_POINTS
 
 
