@@ -210,14 +210,79 @@
           </div>
         </div>
 
-        <p class="lede lede--tight-top">
-          <strong>Score lines.</strong> The model maps overall match win probability to an implied
-          per-set win rate under a best-of-three structure, then samples set scores using
-          calibration tables from the database (<code>matchup_calibration</code>): empirical
-          distributions of loser points for 21- and 15-point sets, split into regular wins and
-          overtime paths. Those set outcomes are combined into 2-0, 2-1, 1-2, and 0-2 bundles;
-          closeness also nudges how tight or lopsided individual sets look.
-        </p>
+        <section class="mm-score-lines" aria-labelledby="score-lines-heading">
+          <h3 id="score-lines-heading" class="mm-score-lines__title">Score lines</h3>
+          <p class="mm-score-lines__intro">
+            After team win probability <code>P(A)</code>, the predictor still has to pick plausible
+            set scores. Here is the pipeline in plain language.
+          </p>
+          <ol class="mm-score-steps">
+            <li class="mm-score-step">
+              <span class="mm-score-step__idx" aria-hidden="true"></span>
+              <div class="mm-score-step__body">
+                <strong class="mm-score-step__label">Match &rarr; sets</strong>
+                <p>
+                  Map overall match win probability to an <em>implied per-set win rate</em> under a
+                  best-of-three structure, so each set can be simulated with consistent odds.
+                </p>
+              </div>
+              <figure class="mm-score-fig" aria-hidden="true">
+                <svg viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                  <text x="4" y="30" fill="#e8a54b" font-size="13" font-family="system-ui, sans-serif">P(match)</text>
+                  <path d="M62 26h28" stroke="#b87a2a" stroke-width="1.5" stroke-linecap="round" />
+                  <polygon points="92,26 98,22 98,30" fill="#b87a2a" />
+                  <text x="104" y="22" fill="#9b958a" font-size="10" font-family="system-ui, sans-serif">best-of-3</text>
+                  <rect x="104" y="28" width="112" height="20" rx="5" fill="rgba(232,165,75,0.06)" stroke="rgba(232,165,75,0.35)" />
+                  <text x="112" y="42" fill="#c4beb4" font-size="11" font-family="system-ui, sans-serif">per-set win rate</text>
+                </svg>
+              </figure>
+            </li>
+            <li class="mm-score-step">
+              <span class="mm-score-step__idx" aria-hidden="true"></span>
+              <div class="mm-score-step__body">
+                <strong class="mm-score-step__label">Calibration tables</strong>
+                <p>
+                  Sample set scores using <code>matchup_calibration</code> in the database: empirical
+                  distributions of loser points for 21- and 15-point sets, split into
+                  <em>regular</em> wins and <em>overtime</em> paths.
+                </p>
+              </div>
+              <figure class="mm-score-fig mm-score-fig--bars" aria-hidden="true">
+                <svg viewBox="0 0 200 52" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                  <text x="4" y="14" fill="#9b958a" font-size="9" font-family="system-ui, sans-serif">loser points (illustrative)</text>
+                  <rect x="12" y="40" width="14" height="8" rx="2" fill="rgba(232,165,75,0.35)" />
+                  <rect x="34" y="32" width="14" height="16" rx="2" fill="rgba(232,165,75,0.5)" />
+                  <rect x="56" y="24" width="14" height="24" rx="2" fill="rgba(232,165,75,0.65)" />
+                  <rect x="78" y="28" width="14" height="20" rx="2" fill="rgba(232,165,75,0.45)" />
+                  <rect x="100" y="34" width="14" height="14" rx="2" fill="rgba(232,165,75,0.4)" />
+                  <line x1="8" y1="44" x2="120" y2="44" stroke="#3a3530" stroke-width="1" />
+                </svg>
+              </figure>
+            </li>
+            <li class="mm-score-step">
+              <span class="mm-score-step__idx" aria-hidden="true"></span>
+              <div class="mm-score-step__body">
+                <strong class="mm-score-step__label">Bundles &amp; closeness</strong>
+                <p>
+                  Set outcomes roll up into match bundles (2-0, 2-1, 1-2, 0-2). A
+                  <em>closeness</em> control nudges whether sets look tight or lopsided on the scoreboard.
+                </p>
+              </div>
+              <figure class="mm-score-fig mm-score-fig--grid" aria-hidden="true">
+                <svg viewBox="0 0 200 56" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                  <rect x="8" y="8" width="84" height="18" rx="4" fill="rgba(232,165,75,0.12)" stroke="rgba(232,165,75,0.35)" />
+                  <text x="42" y="21" text-anchor="middle" fill="#e8dcc8" font-size="11" font-family="ui-monospace, monospace">2-0</text>
+                  <rect x="108" y="8" width="84" height="18" rx="4" fill="rgba(232,165,75,0.08)" stroke="rgba(232,165,75,0.25)" />
+                  <text x="150" y="21" text-anchor="middle" fill="#c4beb4" font-size="11" font-family="ui-monospace, monospace">2-1</text>
+                  <rect x="8" y="34" width="84" height="18" rx="4" fill="rgba(232,165,75,0.08)" stroke="rgba(232,165,75,0.25)" />
+                  <text x="42" y="47" text-anchor="middle" fill="#c4beb4" font-size="11" font-family="ui-monospace, monospace">1-2</text>
+                  <rect x="108" y="34" width="84" height="18" rx="4" fill="rgba(232,165,75,0.08)" stroke="rgba(232,165,75,0.25)" />
+                  <text x="150" y="47" text-anchor="middle" fill="#c4beb4" font-size="11" font-family="ui-monospace, monospace">0-2</text>
+                </svg>
+              </figure>
+            </li>
+          </ol>
+        </section>
       </section>
     </main>
     <script
