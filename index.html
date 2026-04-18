@@ -3,23 +3,36 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Skyler Kaufman</title>
-    <meta name="description" content="Skyler Kaufman — personal site" />
+    <title>SkylerKaufman.com</title>
+    <meta name="description" content="SkylerKaufman.com — personal site" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <canvas id="bg" aria-hidden="true"></canvas>
     <main class="wrap">
-      <p class="eyebrow">Welcome</p>
-      <h1>Skyler Kaufman</h1>
+      <p class="eyebrow eyebrow--sentence" lang="es">Bienvenidos</p>
+      <h1>SkylerKaufman.com</h1>
       <p class="lede">
         This site is just getting started. More soon.
       </p>
-      <p class="lede hint">
-        Try <strong>Volley Chat</strong> (ringed world), <strong>FIVB Explorer</strong> (teal world),
-        <strong>Matchup Predictor</strong> (indigo world), and <strong>Math Meteor</strong> (amber
-        streak) in the sky.
-      </p>
+      <ul class="planet-guide" aria-label="Site areas">
+        <li>
+          <a href="/volley-chat/">Volley Chat</a>
+          <span class="planet-guide__hint"> — AI chat with FIVB tools</span>
+        </li>
+        <li>
+          <a href="/fivb-explorer/">FIVB Explorer</a>
+          <span class="planet-guide__hint"> — data freshness &amp; tables</span>
+        </li>
+        <li>
+          <a href="/fivb-explorer/matchup-predictor/">Matchup Predictor</a>
+          <span class="planet-guide__hint"> — win odds &amp; score spread</span>
+        </li>
+        <li>
+          <a href="/math-meteor/">Math Meteor</a>
+          <span class="planet-guide__hint"> — how the ratings math works</span>
+        </li>
+      </ul>
     </main>
     <script src="/visuals.js" defer></script>
     <script>
