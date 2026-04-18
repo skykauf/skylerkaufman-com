@@ -94,15 +94,29 @@
         <section class="volley-chat-panel">
           <div id="thread" class="volley-thread" aria-live="polite"></div>
           <form id="composer" class="volley-composer">
-            <label class="volley-sr" for="input">Message</label>
-            <textarea
-              id="input"
-              class="volley-input"
-              rows="2"
-              placeholder="Ask anything…"
-              autocomplete="off"
-            ></textarea>
-            <button type="submit" class="volley-send" id="send">Send</button>
+            <div class="volley-composer-input-row">
+              <label class="volley-sr" for="input">Message</label>
+              <textarea
+                id="input"
+                class="volley-input"
+                rows="2"
+                placeholder="Ask anything…"
+                autocomplete="off"
+              ></textarea>
+              <button type="submit" class="volley-send" id="send">Send</button>
+            </div>
+            <div id="starterPromptWrap" class="volley-starter-wrap" hidden>
+              <button
+                type="button"
+                id="starterPromptBtn"
+                class="volley-starter-btn"
+                aria-describedby="starterPromptHint"
+              >
+                Random beach question
+              </button>
+              <span id="starterPromptHint" class="volley-starter-hint"
+                >Picks one of 25 starter prompts about beach performance.</span>
+            </div>
           </form>
           <p id="status" class="volley-status" role="status"></p>
         </section>

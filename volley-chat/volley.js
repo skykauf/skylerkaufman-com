@@ -25,6 +25,37 @@
   const historyListEl = document.getElementById("historyList");
   const newChatBtn = document.getElementById("newChat");
   const toolsExplorerBodyEl = document.getElementById("toolsExplorerBody");
+  const starterPromptWrap = document.getElementById("starterPromptWrap");
+  const starterPromptBtn = document.getElementById("starterPromptBtn");
+
+  /** Fixed pool of one-shot prompts: beach performance sliced by role, time, event tier, matchup shape, and geography. */
+  const STARTER_QUESTIONS = [
+    "Compare career Elo vs rolling recent-form Elo for two active men's teams you pick—who is trending up or down and by roughly how much?",
+    "For the women's pool, rank a handful of teams by how often they win as the lower-Elo side (upset rate)—slice by last 12 months if you can.",
+    "Side-out story: which pairs look strongest on side-out in main-draw matches lately, and how do you back that up with match or rating context?",
+    "Serve pressure: highlight players or pairs with unusually high ace or service-winner rates relative to their service volume—limit to a single gender pool.",
+    "Receiving / passing stability: who gives away the fewest cheap errors in pass when opponent strength is held roughly constant?",
+    "Block and defense impact: find defenders or pairs whose block or dig outcomes punch above their Elo tier in recent events.",
+    "Country depth: which national federations have the most teams above a high Elo floor right now, and who is the outlier pair?",
+    "Youth vs experience: compare under-23 pairs to veteran pairs on win rate vs similar-rated opponents in the same season window.",
+    "Tournament strength: for one player I name next message, re-weight recent results by event tier (e.g. Challenge vs Elite vs Finals) and summarize the adjusted picture.",
+    "Early season vs late season: who fades or improves across the calendar when travel and schedule density change?",
+    "Partner synergy: for a named pair, break down wins by opponent Elo bucket—are they beating peers or mostly farming weaker draws?",
+    "Three-setters vs straight sets: which top teams win disproportionately often in three sets, and is that signal or noise?",
+    "Olympic-cycle trajectory: plot or tabulate Elo change for a country's top three teams since the last Games.",
+    "Upset hunters: pairs with the best record when the model had them as underdog—use a clear pre-match Elo definition.",
+    "Consistency: who has the tightest distribution of set scores or match margins in main draws (low variance performers)?",
+    "Qualification path: teams that most often convert qualification into deep main-draw runs.",
+    "Head-to-head triangle: pick three teams A, B, C where A often beats B and B often beats C—what does data say about A vs C?",
+    "Gender comparison: compare pace or efficiency proxies between men's and women's pools at similar event tiers—call out caveats.",
+    "Form cliff: pairs with the largest gap between career peak Elo and last-six-month Elo—who might be injured, split, or in slump?",
+    "Clutch serving: in tight sets (e.g. 20–20 or later), who gains or loses the most side-outs or break chances if the data allows?",
+    "Transition scoring: which women's teams turn digs or digs-plus-blocks into points at the highest rate recently?",
+    "New pairs: how do freshly formed teams compare to established pairs at a similar starting Elo after N tournaments?",
+    "Opponent-adjusted wins: rank teams by wins over opponents above a rating threshold, not raw win count.",
+    "Serve placement narrative: if you have serve or rally tags, contrast short vs deep serve outcomes; if not, approximate with available stats and say what is missing.",
+    "Sandbox check: pick three random active players from the directory, summarize Elo, last tournament touch, and one surprising stat or outlier you see.",
+  ];
 
   const tabKey = "volley-chat-conversation-id";
   let canAuth = false;
@@ -52,6 +83,16 @@
 
   function clearThread() {
     thread.innerHTML = "";
+  }
+
+  function pickRandomStarterQuestion() {
+    const i = Math.floor(Math.random() * STARTER_QUESTIONS.length);
+    return STARTER_QUESTIONS[i];
+  }
+
+  function updateStarterPromptVisibility() {
+    if (!starterPromptWrap) return;
+    starterPromptWrap.hidden = history.length !== 0;
   }
 
   function renderHistoryList() {
@@ -142,6 +183,7 @@
     renderHistoryList();
     renderFromHistory();
     setStatus("");
+    updateStarterPromptVisibility();
   }
 
   function startNewChat() {
@@ -153,6 +195,7 @@
     sessionStorage.removeItem(tabKey);
     renderHistoryList();
     setStatus(currentUser ? "New saved chat will start on your next message." : "Guest chat reset.");
+    updateStarterPromptVisibility();
   }
 
   function setAuthUi() {
@@ -473,7 +516,15 @@
     } finally {
       sendBtn.disabled = false;
       input.focus();
+      updateStarterPromptVisibility();
     }
+  }
+
+  if (starterPromptBtn) {
+    starterPromptBtn.addEventListener("click", () => {
+      input.value = pickRandomStarterQuestion();
+      sendMessage();
+    });
   }
 
   form.addEventListener("submit", (e) => {
@@ -673,4 +724,5 @@
   initAuth();
   renderContextBar();
   loadToolsExplorer();
+  updateStarterPromptVisibility();
 })();
