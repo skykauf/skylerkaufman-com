@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { generateChatReply, runToolSmokeTests } = require("./lib/chat-service");
+const { generateChatReply, runToolSmokeTests, getChatToolCatalog } = require("./lib/chat-service");
 const { bootstrapSupabase } = require("./lib/bootstrap-supabase");
 const { getFivbProfile } = require("./lib/fivb-profile");
 const { runFivbTableExplorer } = require("./lib/fivb-table-explorer");
@@ -100,6 +100,14 @@ async function handleChatToolsSmoke(req, res) {
 
 app.get("/api/chat-tools-smoke", handleChatToolsSmoke);
 app.post("/api/chat-tools-smoke", handleChatToolsSmoke);
+
+app.get("/api/chat-tools", (_req, res) => {
+  res.setHeader(
+    "Cache-Control",
+    "public, max-age=300, s-maxage=300, stale-while-revalidate=600"
+  );
+  return res.status(200).json(getChatToolCatalog());
+});
 
 app.get("/api/auth-config", (_req, res) => {
   const url = (process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
