@@ -8,6 +8,7 @@ Used by .github/workflows/fivb-vw-statistics.yml and can be run locally with DAT
 """
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -18,6 +19,10 @@ sys.path.insert(0, str(ROOT))
 
 def main() -> None:
     os.chdir(ROOT)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
     from etl.pipeline_env import normalize_database_url_for_pipeline
     from etl.vw_statistics import run_vw_statistics_ingestion
 

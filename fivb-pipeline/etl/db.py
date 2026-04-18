@@ -236,56 +236,9 @@ def ensure_raw_tables(engine: Engine) -> None:
         """,
     ]
 
-    # Commit DDL in its own transaction. Optional ALTERs below can fail on older DBs; in Postgres a
-    # failed statement aborts the whole transaction, so running them in the same begin() as CREATE
-    # would roll back new tables (e.g. raw_vw_player_tournament_stats) while existing tables remain.
     with engine.begin() as conn:
         for ddl in ddl_statements:
             conn.execute(text(ddl))
-
-    with engine.begin() as conn:
-        try:
-            conn.execute(
-                text(
-                    "ALTER TABLE raw.raw_fivb_tournaments ALTER COLUMN season TYPE text USING season::text"
-                )
-            )
-        except Exception:
-            pass
-
-    with engine.begin() as conn:
-        try:
-            conn.execute(text("ALTER TABLE raw.raw_fivb_results ADD COLUMN IF NOT EXISTS payload jsonb"))
-        except Exception:
-            pass
-
-    for alter in [
-        "ALTER TABLE raw.raw_fivb_players ADD PRIMARY KEY (player_id)",
-        "ALTER TABLE raw.raw_fivb_teams ADD PRIMARY KEY (team_id)",
-        "ALTER TABLE raw.raw_fivb_tournaments ADD PRIMARY KEY (tournament_id)",
-        "ALTER TABLE raw.raw_fivb_matches ADD PRIMARY KEY (match_id)",
-        "ALTER TABLE raw.raw_fivb_rankings ADD PRIMARY KEY (ranking_type, snapshot_date, player_id)",
-        "ALTER TABLE raw.raw_fivb_results ADD PRIMARY KEY (tournament_id, team_id)",
-        "ALTER TABLE raw.raw_fivb_events ADD PRIMARY KEY (event_id)",
-        "ALTER TABLE raw.raw_fivb_rounds ADD PRIMARY KEY (round_id)",
-        "ALTER TABLE raw.raw_fivb_round_rankings ADD PRIMARY KEY (round_id, position)",
-        "ALTER TABLE raw.raw_fivb_team_rankings ADD PRIMARY KEY (ranking_type, snapshot_date, gender, position)",
-        "ALTER TABLE raw.raw_vw_player_tournament_stats ADD PRIMARY KEY (stat_url, vw_player_id)",
-    ]:
-        try:
-            with engine.begin() as conn:
-                conn.execute(text(alter))
-        except Exception as e:
-            orig = getattr(e, "orig", None)
-            pgcode = getattr(orig, "pgcode", None) if orig else None
-            if pgcode == "42P16":
-                pass
-            elif pgcode == "23505":
-                raise RuntimeError(
-                    "Raw table has duplicate keys; run with TRUNCATE_RAW=1 once, then re-run."
-                ) from e
-            else:
-                raise
 
 
 def ensure_raw_tournament_empty_check_table(engine: Engine) -> None:

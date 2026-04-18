@@ -48,6 +48,27 @@ def _int_env(key: str, default: int | None) -> int | None:
         return default
 
 
+def _vw_stats_progress_log_every(*, total_urls: int) -> int:
+    """
+    How often to emit progress INFO logs (1 = every completed page).
+    If ETL_VW_STATS_LOG_EVERY is unset, use 1 for small runs and 10 when there are many URLs.
+    """
+    raw = _int_env("ETL_VW_STATS_LOG_EVERY", None)
+    if raw is not None:
+        return max(1, raw)
+    return 1 if total_urls <= 50 else 10
+
+
+def _should_emit_progress_log(completed: int, total: int, every: int) -> bool:
+    if total <= 0:
+        return False
+    if completed == 1 or completed == total:
+        return True
+    if every <= 1:
+        return True
+    return completed % every == 0
+
+
 def canonical_stat_url(url: str) -> str:
     """Normalize scheme and trailing slash for stable PKs."""
     p = urlparse(url.strip())
@@ -211,6 +232,7 @@ def run_vw_statistics_ingestion(
       ETL_VW_STATS_SITEMAP — override sitemap URL
       ETL_VW_STATS_MAX_URLS — cap number of stat pages (for testing)
       ETL_VW_STATS_WORKERS — parallel fetch workers (default 6)
+      ETL_VW_STATS_LOG_EVERY — progress log interval (default: 1 if ≤50 URLs else 10)
     """
     engine = engine or get_engine()
     ensure_raw_tables(engine)
@@ -223,6 +245,16 @@ def run_vw_statistics_ingestion(
     urls = fetch_sitemap_stat_urls(sm, session=session)
     if cap is not None and cap > 0:
         urls = urls[:cap]
+
+    total_urls = len(urls)
+    log_every = _vw_stats_progress_log_every(total_urls=total_urls)
+    logger.info(
+        "VW statistics ingest: %d stat page URL(s) to fetch (workers=%d, log_every=%d, sitemap=%s)",
+        total_urls,
+        workers,
+        log_every,
+        sm,
+    )
 
     rows_buffer: list[dict[str, Any]] = []
     stats = {"urls": 0, "rows": 0, "empty": 0, "errors": 0}
@@ -247,6 +279,7 @@ def run_vw_statistics_ingestion(
             time.sleep(delay)
         return fetch_and_parse_stat_page(session, u)
 
+    completed = 0
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futures = {ex.submit(worker, u): u for u in urls}
         for fut in tqdm(as_completed(futures), total=len(urls), desc="VW stats pages", unit="page"):
@@ -256,6 +289,16 @@ def run_vw_statistics_ingestion(
             except Exception as e:
                 logger.warning("VW stats worker error for %s: %s", u, e)
                 stats["errors"] += 1
+                completed += 1
+                remaining = total_urls - completed
+                if _should_emit_progress_log(completed, total_urls, log_every):
+                    logger.info(
+                        "VW stats progress: %d/%d done (%d left); last attempted: %s (worker error)",
+                        completed,
+                        total_urls,
+                        remaining,
+                        u,
+                    )
                 continue
             stats["urls"] += 1
             ek = event_key_from_stat_url(final_url)
@@ -275,5 +318,23 @@ def run_vw_statistics_ingestion(
                 )
             if len(rows_buffer) >= 500:
                 flush()
+            completed += 1
+            remaining = total_urls - completed
+            if _should_emit_progress_log(completed, total_urls, log_every):
+                logger.info(
+                    "VW stats progress: %d/%d done (%d left); last pulled: %s (%d row(s) on page)",
+                    completed,
+                    total_urls,
+                    remaining,
+                    final_url,
+                    len(parsed),
+                )
     flush()
+    logger.info(
+        "VW statistics ingest finished: urls_ok=%d rows_upserted=%d empty_pages=%d errors=%d",
+        stats["urls"],
+        stats["rows"],
+        stats["empty"],
+        stats["errors"],
+    )
     return stats
