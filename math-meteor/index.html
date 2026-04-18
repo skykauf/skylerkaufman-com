@@ -9,10 +9,11 @@
       content="How Elo ratings and the matchup predictor combine career strength, recent form, and score calibration."
     />
     <link rel="stylesheet" href="/fivb-explorer/styles.css" />
+    <link rel="stylesheet" href="/math-meteor/styles.css" />
   </head>
-  <body>
+  <body class="math-meteor">
     <main class="page">
-      <header class="hero">
+      <header class="hero meteor-hero">
         <p class="eyebrow">Math Meteor</p>
         <h1>Math Meteor</h1>
         <p class="lede">
@@ -117,7 +118,7 @@
           </p>
         </div>
 
-        <p class="lede" style="margin-top: 1rem">
+        <p class="lede lede--tight-top">
           <strong>Score lines.</strong> The model maps overall match win probability to an implied
           per-set win rate under a best-of-three structure, then samples set scores using
           calibration tables from the database (<code>matchup_calibration</code>): empirical
