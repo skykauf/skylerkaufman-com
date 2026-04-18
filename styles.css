@@ -56,12 +56,6 @@ body {
   color: var(--accent);
 }
 
-.eyebrow--sentence {
-  text-transform: none;
-  letter-spacing: 0.14em;
-  font-weight: 500;
-}
-
 h1 {
   margin: 0 0 1rem;
   font-family: Georgia, "Times New Roman", serif;
