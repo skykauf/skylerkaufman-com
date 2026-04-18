@@ -102,17 +102,19 @@
             <div class="eq-note">
               <span class="eq-step" aria-hidden="true">5</span>
               <div class="eq-note-body">
-                <strong>Round weight</strong>
+                <strong>Clutchness weight</strong>
                 <p>
-                  In round-weighted Elo, multiply K by a weight that depends on how deep the match is
-                  in the bracket.
+                  In clutchness Elo, multiply K by a round factor (deeper bracket rounds count more) and
+                  by tournament strength: FIVB points awarded for winning the event, normalized to a
+                  reference tier so majors count more than smaller stops.
                 </p>
               </div>
             </div>
             <div class="eq-math">
-              $$\Delta\text{Team}_1 = K \times \text{Weight} \times (S_1 - E_1)$$
+              $$\Delta\text{Team}_1 = K \times \text{RoundW} \times \text{TournamentW} \times (S_1 - E_1)$$
               <p class="eq-foot muted">
-                Weights: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0
+                RoundW: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0.
+                TournamentW = first-place points ÷ 800 (null or missing → 1.0).
               </p>
             </div>
           </div>

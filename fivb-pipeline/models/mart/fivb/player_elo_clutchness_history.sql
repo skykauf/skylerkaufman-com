@@ -4,7 +4,7 @@
         tags=['marts', 'fivb', 'elo'],
     )
 }}
--- Round-weighted Elo history: one row per player per match (finals/semis count more than pool).
+-- Clutchness Elo history: one row per player per match (round depth × tournament 1st-place points).
 select
     e.player_id,
     p.full_name as player_name,
@@ -17,7 +17,7 @@ select
     dt.name as tournament_name,
     dt.season as tournament_season,
     e.elo_rating
-from {{ source('elo', 'player_elo_round_weighted_history') }} as e
+from {{ source('elo', 'player_elo_clutchness_history') }} as e
 left join {{ ref('stg_fivb_players') }} as p on p.player_id = e.player_id
 left join {{ ref('stg_fivb_matches') }} as m on m.match_id = e.match_id
 left join {{ ref('dim_tournaments') }} as dt on dt.tournament_id = m.tournament_id

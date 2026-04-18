@@ -19,7 +19,9 @@ SELECT 'feed with played_at or start_date', COUNT(*) FROM mart.elo_match_feed
   WHERE played_at IS NOT NULL OR tournament_start_date IS NOT NULL
 UNION ALL
 -- 3. History rows (4 per match)
-SELECT 'player_elo_history', COUNT(*) FROM core.player_elo_history;
+SELECT 'player_elo_history', COUNT(*) FROM core.player_elo_history
+UNION ALL
+SELECT 'player_elo_clutchness_history', COUNT(*) FROM core.player_elo_clutchness_history;
 ```
 
 - **raw with winner** &lt; **raw_fivb_matches**: many matches have no winner (e.g. walkover, incomplete).

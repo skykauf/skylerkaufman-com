@@ -125,6 +125,8 @@ The **schema** of the Elo output table should look like:
 - One row per **player per match played** (i.e. after each match, append four rows—one per player). “Across time” = many rows per player, ordered by `as_of_date`.
 - **Latest rating** = per (player_id, gender) take the row with max(as_of_date).
 
+**Clutchness Elo** (`player_elo_clutchness_history`): same loop and schema, but each match scales \(K\) by a **round weight** (final vs pool, etc.) and by **tournament strength** — FIVB points for 1st place at that event (`dim_tournaments.first_place_points` on `elo_match_feed`), normalized to a reference value in `scripts/elo_compute.py`. Missing points are treated as neutral (multiplier 1.0).
+
 ---
 
 ### 5.3 dbt models on top of Elo output
@@ -141,6 +143,9 @@ Once the `player_elo_history` table exists (populated by the Python job), add db
 
 3. **Optional: match_mart enrichment**  
    - Join match_mart to player Elo history (as of `played_at`) to get “team1_avg_elo”, “team2_avg_elo” for analytics, still using only H2H-derived Elo.
+
+4. **`mart/fivb/player_elo_clutchness_history`** and **`mart/fivb/player_elo_clutchness_latest`**  
+   - Same pattern as flat Elo, sourced from `core.player_elo_clutchness_history` (Python output).
 
 ---
 
@@ -160,7 +165,7 @@ Once the `player_elo_history` table exists (populated by the Python job), add db
 ## 7. Summary
 
 - **Input**: H2H-only match feed from existing dbt models → new **`elo_match_feed`** mart (dbt view).
-- **Computation**: Stateful Elo loop in **Python** on top of `elo_match_feed`; script writes **`player_elo_history`** to the warehouse.
-- **Output**: dbt **sources** that table and builds marts for **player Elo across time** and **latest Elo**, with no dependency on FIVB rankings.
+- **Computation**: Stateful Elo loop in **Python** on top of `elo_match_feed`; script writes **`player_elo_history`** and **`player_elo_clutchness_history`** to the warehouse.
+- **Output**: dbt **sources** those tables and builds marts for **player Elo across time**, **latest Elo**, and the **clutchness** variants, with no dependency on FIVB rankings.
 
 The Elo model is Pythonic on top of the dbt-built feed; dbt then owns the feed and the downstream marts.

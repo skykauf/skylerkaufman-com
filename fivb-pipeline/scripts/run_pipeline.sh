@@ -55,7 +55,7 @@ else
   echo "Skipping VIS fetch (--no-fetch). Using existing raw data."
 fi
 
-# Ensure core.player_elo_history exists so dbt elo marts can build even before first compute.
+# Ensure core.player_elo_history and core.player_elo_clutchness_history exist so dbt elo marts can build even before first compute.
 python scripts/elo_compute.py --init-only
 
 dbt run

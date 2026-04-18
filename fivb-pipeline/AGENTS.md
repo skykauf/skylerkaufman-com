@@ -42,7 +42,7 @@ Use **psql** or the **Postgres MCP** (if configured in `.cursor/mcp.json`) to ru
 | `raw`    | Raw ingested tables: `raw_fivb_matches`, `raw_fivb_team_rankings`, etc. |
 | `staging` | dbt staging: `stg_fivb_players`, `stg_fivb_matches`, etc. |
 | `core`   | dbt core: `fct_matches`, `fct_team_rankings`, `fct_tournament_standings`, `dim_team_tournaments`, `dim_tournaments` |
-| `mart`   | dbt marts: `match_mart`, `player_elo_latest`, `player_elo_history` |
+| `mart`   | dbt marts: `match_mart`, `player_elo_latest`, `player_elo_history`, `player_elo_clutchness_latest`, `player_elo_clutchness_history` |
 
 ### Common lookups
 

@@ -4,7 +4,8 @@ Compute player Elo ratings from H2H match results.
 
 Writes two tables:
   - core.player_elo_history: standard Elo (all matches count equally).
-  - core.player_elo_round_weighted_history: round-weighted Elo (finals/semis count more than pool).
+  - core.player_elo_clutchness_history: clutchness Elo — K is scaled by round depth
+    (finals/semis > pool) and by tournament strength (FIVB points for 1st place).
 
 Reads from the dbt-built view mart.elo_match_feed (run `dbt run` first). Uses the same DB as dbt/ETL: set DATABASE_URL (or .env) before running.
 
@@ -34,13 +35,16 @@ from etl.config import get_db_config
 INITIAL_ELO = 1500.0
 K = 32.0
 
-# Round weights for round-weighted Elo: later/knockout rounds count more than pool play.
+# Round weights for clutchness Elo: later/knockout rounds count more than pool play.
 ROUND_WEIGHT_FINAL = 2.0
 ROUND_WEIGHT_SEMI = 1.5
 ROUND_WEIGHT_QUARTER = 1.25
 ROUND_WEIGHT_RO16 = 1.1
 ROUND_WEIGHT_POOL = 0.75
 ROUND_WEIGHT_DEFAULT = 1.0
+
+# Normalize VIS first-place team points to ~1.0 at a typical elite event (tune if needed).
+REFERENCE_FIRST_PLACE_POINTS = 800.0
 
 
 def round_weight(
@@ -66,6 +70,32 @@ def round_weight(
     return ROUND_WEIGHT_DEFAULT
 
 
+def tournament_points_weight(first_place_points) -> float:
+    """Scale by event importance using FIVB points for winning the tournament (dim_tournaments.first_place_points)."""
+    if first_place_points is None:
+        return 1.0
+    try:
+        fp = float(first_place_points)
+    except (TypeError, ValueError):
+        return 1.0
+    if fp <= 0:
+        return 1.0
+    return fp / REFERENCE_FIRST_PLACE_POINTS
+
+
+def clutchness_weight(
+    round_phase: str | None,
+    round_name: str | None,
+    is_final: bool | None,
+    is_pool_phase: bool | None,
+    first_place_points,
+) -> float:
+    """Round coefficient × tournament strength (points for 1st at this event)."""
+    return round_weight(round_phase, round_name, is_final, is_pool_phase) * tournament_points_weight(
+        first_place_points
+    )
+
+
 def expected_score(elo_a: float, elo_b: float) -> float:
     """Probability that side A wins: 1 / (1 + 10^((elo_b - elo_a)/400))."""
     return 1.0 / (1.0 + 10.0 ** ((elo_b - elo_a) / 400.0))
@@ -87,9 +117,9 @@ def _to_date(val) -> date | None:
 
 
 def run_elo(engine) -> tuple[list[dict], list[dict]]:
-    """Read mart.elo_match_feed, compute standard and round-weighted Elo per gender over time.
-    Returns (history_standard, history_round_weighted).
-    Uses match_date for ordering and as_of_date. Round-weighted Elo uses K * round_weight per match."""
+    """Read mart.elo_match_feed, compute standard and clutchness Elo per gender over time.
+    Returns (history_standard, history_clutchness).
+    Clutchness Elo uses K * clutchness_weight per match (round × tournament points for 1st)."""
     with engine.begin() as conn:
         rows = conn.execute(
             text("""
@@ -97,7 +127,8 @@ def run_elo(engine) -> tuple[list[dict], list[dict]]:
                        team1_player_a_id, team1_player_b_id,
                        team2_player_a_id, team2_player_b_id,
                        is_winner_team1,
-                       round_phase, round_name, is_final, is_pool_phase
+                       round_phase, round_name, is_final, is_pool_phase,
+                       tournament_first_place_points
                 from mart.elo_match_feed
                 where match_date is not null
                 order by tournament_gender, match_date, match_id
@@ -105,9 +136,9 @@ def run_elo(engine) -> tuple[list[dict], list[dict]]:
         ).fetchall()
 
     history: list[dict] = []
-    history_rw: list[dict] = []
+    history_clutch: list[dict] = []
     current: dict[str, dict[int, float]] = {}
-    current_rw: dict[str, dict[int, float]] = {}
+    current_clutch: dict[str, dict[int, float]] = {}
 
     for r in tqdm(rows, desc="Elo compute", unit="match"):
         (
@@ -123,19 +154,20 @@ def run_elo(engine) -> tuple[list[dict], list[dict]]:
             round_name,
             is_final,
             is_pool_phase,
+            tournament_first_place_points,
         ) = r
         as_of = _to_date(match_date)
         if as_of is None:
             continue
         if gender not in current:
             current[gender] = {}
-            current_rw[gender] = {}
+            current_clutch[gender] = {}
 
         def elo(pid: int) -> float:
             return current[gender].get(pid, INITIAL_ELO)
 
-        def elo_rw(pid: int) -> float:
-            return current_rw[gender].get(pid, INITIAL_ELO)
+        def elo_clutch(pid: int) -> float:
+            return current_clutch[gender].get(pid, INITIAL_ELO)
 
         team1_elo = (elo(t1_pa) + elo(t1_pb)) / 2.0
         team2_elo = (elo(t2_pa) + elo(t2_pb)) / 2.0
@@ -151,17 +183,19 @@ def run_elo(engine) -> tuple[list[dict], list[dict]]:
         current[gender][t2_pa] = elo(t2_pa) + half * delta_team2
         current[gender][t2_pb] = elo(t2_pb) + half * delta_team2
 
-        # Round-weighted Elo: same formula with K * weight
-        w = round_weight(round_phase, round_name, is_final, is_pool_phase)
-        team1_elo_rw = (elo_rw(t1_pa) + elo_rw(t1_pb)) / 2.0
-        team2_elo_rw = (elo_rw(t2_pa) + elo_rw(t2_pb)) / 2.0
-        e1_rw = expected_score(team1_elo_rw, team2_elo_rw)
-        delta_team1_rw = K * w * (s1 - e1_rw)
-        delta_team2_rw = -delta_team1_rw
-        current_rw[gender][t1_pa] = elo_rw(t1_pa) + half * delta_team1_rw
-        current_rw[gender][t1_pb] = elo_rw(t1_pb) + half * delta_team1_rw
-        current_rw[gender][t2_pa] = elo_rw(t2_pa) + half * delta_team2_rw
-        current_rw[gender][t2_pb] = elo_rw(t2_pb) + half * delta_team2_rw
+        # Clutchness Elo: K × round_weight × tournament_points_weight
+        w = clutchness_weight(
+            round_phase, round_name, is_final, is_pool_phase, tournament_first_place_points
+        )
+        team1_elo_c = (elo_clutch(t1_pa) + elo_clutch(t1_pb)) / 2.0
+        team2_elo_c = (elo_clutch(t2_pa) + elo_clutch(t2_pb)) / 2.0
+        e1_c = expected_score(team1_elo_c, team2_elo_c)
+        delta_team1_c = K * w * (s1 - e1_c)
+        delta_team2_c = -delta_team1_c
+        current_clutch[gender][t1_pa] = elo_clutch(t1_pa) + half * delta_team1_c
+        current_clutch[gender][t1_pb] = elo_clutch(t1_pb) + half * delta_team1_c
+        current_clutch[gender][t2_pa] = elo_clutch(t2_pa) + half * delta_team2_c
+        current_clutch[gender][t2_pb] = elo_clutch(t2_pb) + half * delta_team2_c
 
         for pid in (t1_pa, t1_pb, t2_pa, t2_pb):
             history.append({
@@ -171,19 +205,19 @@ def run_elo(engine) -> tuple[list[dict], list[dict]]:
                 "match_id": match_id,
                 "elo_rating": round(current[gender][pid], 2),
             })
-            history_rw.append({
+            history_clutch.append({
                 "player_id": pid,
                 "gender": gender,
                 "as_of_date": as_of,
                 "match_id": match_id,
-                "elo_rating": round(current_rw[gender][pid], 2),
+                "elo_rating": round(current_clutch[gender][pid], 2),
             })
 
-    return history, history_rw
+    return history, history_clutch
 
 
 def ensure_table(engine) -> None:
-    """Create core schema and Elo history tables (standard + round-weighted) if they do not exist."""
+    """Create core schema and Elo history tables (standard + clutchness) if they do not exist."""
     ddl = """
     create schema if not exists core;
     create table if not exists core.player_elo_history (
@@ -194,7 +228,7 @@ def ensure_table(engine) -> None:
         elo_rating numeric not null,
         primary key (player_id, gender, match_id)
     );
-    create table if not exists core.player_elo_round_weighted_history (
+    create table if not exists core.player_elo_clutchness_history (
         player_id   bigint not null,
         gender      text not null,
         as_of_date  date not null,
@@ -204,6 +238,7 @@ def ensure_table(engine) -> None:
     );
     """
     with engine.begin() as conn:
+        conn.execute(text("drop table if exists core.player_elo_round_weighted_history"))
         for stmt in ddl.strip().split(";"):
             stmt = stmt.strip()
             if stmt:
@@ -264,19 +299,21 @@ def write_history(engine, history: list[dict]) -> int:
     )
 
 
-def write_round_weighted_history(engine, history_rw: list[dict]) -> int:
-    """Truncate core.player_elo_round_weighted_history and insert new rows."""
+def write_clutchness_history(engine, history_c: list[dict]) -> int:
+    """Truncate core.player_elo_clutchness_history and insert new rows."""
     return _write_elo_history(
         engine,
-        history_rw,
-        "core.player_elo_round_weighted_history",
-        desc="Write round-weighted history",
+        history_c,
+        "core.player_elo_clutchness_history",
+        desc="Write clutchness history",
     )
 
 
 def main() -> None:
     import argparse
-    parser = argparse.ArgumentParser(description="Compute player Elo from mart.elo_match_feed and write core.player_elo_history.")
+    parser = argparse.ArgumentParser(
+        description="Compute player Elo from mart.elo_match_feed; write core.player_elo_history and core.player_elo_clutchness_history."
+    )
     parser.add_argument("--init-only", action="store_true", help="Only create core schema and table; do not read feed or write history (use before first dbt run so elo marts can be built).")
     args = parser.parse_args()
 
@@ -284,14 +321,14 @@ def main() -> None:
     engine = get_engine()
     ensure_table(engine)
     if args.init_only:
-        print("Created core.player_elo_history and core.player_elo_round_weighted_history (empty). Run dbt run, then run this script without --init-only to populate.")
+        print("Created core.player_elo_history and core.player_elo_clutchness_history (empty). Run dbt run, then run this script without --init-only to populate.")
         return
     print("Reading mart.elo_match_feed…")
-    history, history_rw = run_elo(engine)
-    print(f"Computed {len(history)} standard and {len(history_rw)} round-weighted history rows.")
+    history, history_clutch = run_elo(engine)
+    print(f"Computed {len(history)} standard and {len(history_clutch)} clutchness history rows.")
     written = write_history(engine, history)
-    written_rw = write_round_weighted_history(engine, history_rw)
-    print(f"Wrote {written} rows to core.player_elo_history, {written_rw} to core.player_elo_round_weighted_history.")
+    written_c = write_clutchness_history(engine, history_clutch)
+    print(f"Wrote {written} rows to core.player_elo_history, {written_c} to core.player_elo_clutchness_history.")
 
 
 if __name__ == "__main__":

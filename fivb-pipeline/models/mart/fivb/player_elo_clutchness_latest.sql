@@ -4,14 +4,14 @@
         tags=['marts', 'fivb', 'elo'],
     )
 }}
--- Latest round-weighted Elo per player per gender (finals/semis weighted more than pool).
+-- Latest clutchness Elo per player per gender (round × tournament strength weighting).
 with player_totals as (
     select
         e.player_id,
         e.gender,
         count(*) as matches_played,
         sum(case when tt.team_id = m.winner_team_id then 1 else 0 end) as wins
-    from {{ source('elo', 'player_elo_round_weighted_history') }} as e
+    from {{ source('elo', 'player_elo_clutchness_history') }} as e
     join {{ ref('stg_fivb_matches') }} as m on m.match_id = e.match_id
     join {{ ref('dim_team_tournaments') }} as tt
         on tt.tournament_id = m.tournament_id
@@ -33,7 +33,7 @@ ranked as (
         dt.name as last_match_tournament_name,
         dt.season as last_match_tournament_season,
         row_number() over (partition by e.player_id, e.gender order by e.as_of_date desc, e.match_id desc) as rn
-    from {{ source('elo', 'player_elo_round_weighted_history') }} as e
+    from {{ source('elo', 'player_elo_clutchness_history') }} as e
     left join {{ ref('stg_fivb_players') }} as p on p.player_id = e.player_id
     left join {{ ref('stg_fivb_matches') }} as m on m.match_id = e.match_id
     left join {{ ref('dim_tournaments') }} as dt on dt.tournament_id = m.tournament_id

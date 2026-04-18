@@ -5,7 +5,7 @@
     )
 }}
 -- One row per completed match: H2H-only input for the Elo calculator (no rankings/standings).
--- Consumed by the Python Elo script, which writes core.player_elo_history.
+-- Consumed by the Python Elo script, which writes core.player_elo_history and core.player_elo_clutchness_history.
 -- Time ordering: played_at is rarely populated; use match_date (COALESCE(played_at, round_start_date, tournament_start_date)) for ordering and as_of_date.
 --
 -- Dedup by match_id: the same match can appear multiple times if dim_team_tournaments
@@ -18,6 +18,7 @@ with feed as (
         m.match_date,
         m.played_at,
         dt.start_date as tournament_start_date,
+        dt.first_place_points as tournament_first_place_points,
         m.tournament_gender,
         t1.player_a_id as team1_player_a_id,
         t1.player_b_id as team1_player_b_id,
@@ -44,6 +45,7 @@ select
     match_date,
     played_at,
     tournament_start_date,
+    tournament_first_place_points,
     tournament_gender,
     team1_player_a_id,
     team1_player_b_id,
