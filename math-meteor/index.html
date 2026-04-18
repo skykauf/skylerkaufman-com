@@ -53,8 +53,8 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{TeamElo}_1 = \frac{\text{Elo}_{1A} + \text{Elo}_{1B}}{2}$$
-              $$\text{TeamElo}_2 = \frac{\text{Elo}_{2A} + \text{Elo}_{2B}}{2}$$
+              $$\text{team\_elo}_1 = \frac{\text{elo}_{1A} + \text{elo}_{1B}}{2}$$
+              $$\text{team\_elo}_2 = \frac{\text{elo}_{2A} + \text{elo}_{2B}}{2}$$
             </div>
           </div>
           <div class="eq-row">
@@ -66,7 +66,7 @@
               </div>
             </div>
             <div class="eq-math">
-              $$E_1 = \frac{1}{1 + 10^{(\text{TeamElo}_2 - \text{TeamElo}_1)/400}}$$
+              $$E_1 = \frac{1}{1 + 10^{(\text{team\_elo}_2 - \text{team\_elo}_1)/400}}$$
             </div>
           </div>
           <div class="eq-row">
@@ -94,8 +94,8 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{NewElo}_{1A} = \text{OldElo}_{1A} + 0.5\,\Delta\text{Team}_1$$
-              $$\text{NewElo}_{1B} = \text{OldElo}_{1B} + 0.5\,\Delta\text{Team}_1$$
+              $$\text{new\_elo}_{1A} = \text{old\_elo}_{1A} + 0.5\,\Delta\text{Team}_1$$
+              $$\text{new\_elo}_{1B} = \text{old\_elo}_{1B} + 0.5\,\Delta\text{Team}_1$$
             </div>
           </div>
           <div class="eq-row">
@@ -111,10 +111,10 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\Delta\text{Team}_1 = K \times \text{RoundW} \times \text{TournamentW} \times (S_1 - E_1)$$
+              $$\Delta\text{Team}_1 = K \times \text{round\_w} \times \text{tournament\_w} \times (S_1 - E_1)$$
               <p class="eq-foot muted">
-                RoundW: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0.
-                TournamentW = first-place points ÷ 800 (null or missing → 1.0).
+                round_w: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0.
+                tournament_w = first-place points ÷ 800 (null or missing → 1.0).
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{recentForm} = (\text{winRate},\,\text{avgSetDiff},\,\text{eloTrend})$$
+              $$\text{recent\_form} = (\text{win\_rate},\,\text{avg\_set\_diff},\,\text{elo\_trend})$$
             </div>
           </div>
           <div class="eq-row">
@@ -156,7 +156,7 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{formPoints} = 110(\text{winRate} - 0.5) + 38\cdot\text{avgSetDiff} + 0.2\cdot\text{eloTrend}$$
+              $$\text{form\_points} = 110(\text{win\_rate} - 0.5) + 38\cdot\text{avg\_set\_diff} + 0.2\cdot\text{elo\_trend}$$
             </div>
           </div>
           <div class="eq-row">
@@ -171,9 +171,9 @@
               </div>
             </div>
             <div class="eq-math">
-              $$\text{teamCareerElo} = \frac{\text{elo}_1 + \text{elo}_2}{2}$$
-              $$\text{teamFormPts} = \frac{\text{formPts}_1 + \text{formPts}_2}{2}$$
-              $$\text{teamRating} = \text{teamCareerElo} + \text{teamFormPts}$$
+              $$\text{team\_career\_elo} = \frac{\text{elo}_1 + \text{elo}_2}{2}$$
+              $$\text{team\_form\_pts} = \frac{\text{form\_pts}_1 + \text{form\_pts}_2}{2}$$
+              $$\text{team\_rating} = \text{team\_career\_elo} + \text{team\_form\_pts}$$
             </div>
           </div>
           <div class="eq-row">

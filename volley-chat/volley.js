@@ -1,4 +1,15 @@
 (() => {
+  /** User-facing identifiers: show snake_case, never camelCase (only transforms strings with a lower→upper boundary). */
+  function displaySnake(str) {
+    const s = String(str ?? "");
+    if (!s) return s;
+    if (!/[a-z][A-Z]/.test(s)) return s;
+    return s
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+      .toLowerCase();
+  }
+
   const thread = document.getElementById("thread");
   const form = document.getElementById("composer");
   const input = document.getElementById("input");
@@ -328,7 +339,7 @@
       return;
     }
     if (evt.type === "tool_start") {
-      pushToolActivity(`Running tool: ${evt.tool}`, true);
+      pushToolActivity(`Running tool: ${displaySnake(evt.tool)}`, true);
       return;
     }
     if (evt.type === "tool_done") {
@@ -337,7 +348,7 @@
       runMetrics.toolCount += 1;
       runMetrics.toolMs += Number(evt.duration_ms || 0);
       pushToolActivity(
-        `${evt.tool} ${evt.ok ? "done" : "failed"}${rowInfo}${d ? ` in ${d}` : ""}.`,
+        `${displaySnake(evt.tool)} ${evt.ok ? "done" : "failed"}${rowInfo}${d ? ` in ${d}` : ""}.`,
         false,
         evt.preview || null
       );
@@ -576,7 +587,7 @@
     const summary = document.createElement("summary");
     const nameSpan = document.createElement("span");
     nameSpan.className = "volley-explorer-name";
-    nameSpan.textContent = t.name || "(unnamed)";
+    nameSpan.textContent = displaySnake(t.name) || "(unnamed)";
     summary.appendChild(nameSpan);
     details.appendChild(summary);
     const desc = document.createElement("p");
@@ -593,7 +604,7 @@
         line.className = "volley-explorer-param-meta";
         const nm = document.createElement("span");
         nm.className = "volley-explorer-param-name";
-        nm.textContent = p.name;
+        nm.textContent = displaySnake(p.name);
         line.appendChild(nm);
         const reqLabel = p.required ? ", required" : ", optional";
         line.appendChild(document.createTextNode(` — ${p.type || "unknown"}${reqLabel}`));
@@ -639,7 +650,7 @@
           wrap.className = "volley-explorer-section";
           const h = document.createElement("h3");
           h.className = "volley-explorer-section-title";
-          h.textContent = sec.title || "Tools";
+          h.textContent = displaySnake(sec.title) || "Tools";
           wrap.appendChild(h);
           const list = Array.isArray(sec.tools) ? sec.tools : [];
           list.forEach((t) => {

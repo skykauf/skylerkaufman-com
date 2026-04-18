@@ -1,4 +1,14 @@
 (function () {
+  function displaySnake(str) {
+    const s = String(str ?? "");
+    if (!s) return s;
+    if (!/[a-z][A-Z]/.test(s)) return s;
+    return s
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+      .toLowerCase();
+  }
+
   const statusEl = document.getElementById("status");
   const freshnessEl = document.getElementById("freshness");
   const nullRatesEl = document.getElementById("nullRates");
@@ -53,7 +63,7 @@
       .map((row) => {
         const rates = row.null_pct || {};
         const inner = Object.keys(rates)
-          .map((k) => `<tr><td>${esc(k)}</td><td>${esc(rates[k])}%</td></tr>`)
+          .map((k) => `<tr><td>${esc(displaySnake(k))}</td><td>${esc(rates[k])}%</td></tr>`)
           .join("");
         return `
           <div class="card" style="margin-top:0.8rem">
