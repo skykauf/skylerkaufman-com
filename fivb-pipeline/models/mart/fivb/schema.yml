@@ -69,6 +69,8 @@ models:
       - name: tournament_country_code
       - name: tournament_country_name
       - name: tournament_is_major
+      - name: tournament_first_place_points
+        description: "Points for winning this event (same for every team row); from GetBeachTournamentRanking on the rank-1 row. Null when missing from VIS or no champion row."
       - name: team_display_name
       - name: team_country_code
       - name: finishing_pos

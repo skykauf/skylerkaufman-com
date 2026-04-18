@@ -8,6 +8,8 @@ models:
         description: "Unique tournament number (VIS No)."
         tests:
           - dbt_utils.at_least_one
+      - name: first_place_points
+        description: "Points for 1st place at this event (from GetBeachTournamentRanking EarnedPointsTeam on the champion row). Null when no champion row in results or VIS omitted points."
       - name: duration_days
         description: "Tournament length in days (end_date - start_date + 1)."
       - name: season_year

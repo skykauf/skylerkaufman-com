@@ -144,6 +144,19 @@ models:
       - name: payload
       - name: ingested_at
 
+  - name: stg_fivb_tournament_first_place_points
+    description: "Per tournament: points awarded to 1st place (champion) from GetBeachTournamentRanking EarnedPointsTeam. One row per tournament that has a finishing_pos = 1 row in stg_fivb_results."
+    columns:
+      - name: tournament_id
+        description: "VIS tournament number."
+        tests:
+          - unique
+          - not_null
+      - name: first_place_points
+        description: "Points on the rank-1 row (same as champion EarnedPointsTeam). Null when VIS does not populate points."
+      - name: ingested_at
+        description: "Latest ingested_at among champion rows for this tournament."
+
   - name: stg_fivb_team_rankings
     description: "World Tour and Olympic selection rankings (M/W) – staging from raw.raw_fivb_team_rankings"
     columns:

@@ -158,6 +158,7 @@ select
     dt.status as tournament_status,
     dt.timezone as tournament_timezone,
     dt.is_major as tournament_is_major,
+    dt.first_place_points as tournament_first_place_points,
     -- team
     s.team_display_name,
     s.player_a_name,

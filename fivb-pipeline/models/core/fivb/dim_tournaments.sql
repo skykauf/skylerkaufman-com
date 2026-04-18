@@ -17,6 +17,7 @@ select
     t.gender,
     t.status,
     t.timezone,
+    fp.first_place_points,
     -- derived
     (t.end_date - t.start_date + 1)::int as duration_days,
     -- Use start year for ranges (e.g. "1995-96" → 1995, "1987-91" → 1987); single year unchanged
@@ -26,3 +27,5 @@ select
         else false
     end as is_major
 from {{ ref('stg_fivb_tournaments') }} as t
+left join {{ ref('stg_fivb_tournament_first_place_points') }} as fp
+    on fp.tournament_id = t.tournament_id
