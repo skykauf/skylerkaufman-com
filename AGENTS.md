@@ -10,6 +10,8 @@ Canonical skill files live under [`skills/`](skills/) and are symlinked into [`.
 
 [`skills/repo-verify/SKILL.md`](skills/repo-verify/SKILL.md)
 
+For **manual FIVB pipeline cron** smoke tests in production, prefer the user’s **Cursor `/vercel`** integration or the **Vercel dashboard Cron Jobs → Run** — not pasting **`CRON_SECRET`** or one-off **`curl`** unless the secret is already available in the environment (see that skill).
+
 ## Chat tool smoke-test requirement
 
 [`skills/chat-tools-smoke/SKILL.md`](skills/chat-tools-smoke/SKILL.md)

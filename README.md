@@ -108,6 +108,8 @@ The FIVB VIS pipeline run can take **on the order of an hour** (VIS ingest, `dbt
 
 You can still call **`/api/trigger-fivb-vis-pipeline`** or **`/api/trigger-fivb-vw-statistics`** manually to dispatch a **single** workflow.
 
+**Manual run (production):** In **Cursor**, use the **`/vercel`** integration to open this project and trigger the cron (or use the Vercel dashboard: **Project → Cron Jobs →** path **`/api/trigger-fivb-pipelines` → Run**). That uses **`CRON_SECRET`** from the project env — you do not need to paste it into a terminal or chat. For scripts, `curl` with **`Authorization: Bearer …`** only when the secret is already in your environment.
+
 Each handler calls GitHub **`workflow_dispatch`** with your **`DATABASE_URL`** from Vercel as **`database_url`**. You do **not** need a **`DATABASE_URL`** repository secret on GitHub for that path.
 
 **Vercel environment variables:**

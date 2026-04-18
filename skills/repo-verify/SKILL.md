@@ -44,3 +44,13 @@ Expect JSON with `"content"` on success. A `404` on `/api/chat` usually means th
 ## After deploy (Vercel)
 
 Confirm env vars (`HF_TOKEN`, optional `HF_MODEL` / `DATABASE_URL`), redeploy, then smoke-test the same `curl` against the production URL if appropriate.
+
+## Manual FIVB cron / GitHub dispatch (production)
+
+Scheduled route: **`GET /api/trigger-fivb-pipelines`** (see `vercel.json`). It requires **`Authorization: Bearer $CRON_SECRET`**.
+
+**Do not** ask the user to paste **`CRON_SECRET`** into chat, and do not instruct raw **`curl`** unless that secret is already available in the shell environment.
+
+**Preferred in Cursor:** use the **`/vercel`** integration (Vercel MCP or workspace integration) to open the project and **run the cron** or inspect deployments — same effect as the schedule without exposing secrets.
+
+**Alternative:** Vercel Dashboard → your project → **Cron Jobs** → the row for **`/api/trigger-fivb-pipelines`** → **Run**.
