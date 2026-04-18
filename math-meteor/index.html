@@ -113,15 +113,31 @@
                 </p>
               </div>
             </div>
-            <div class="eq-math">
+            <div class="eq-math eq-math--clutch">
               $$\begin{aligned}
               \Delta\text{Team}_1 = {}&K \times \text{round\_w} \times \text{tournament\_w} \\
               &\quad \times (S_1 - E_1)
               \end{aligned}$$
-              <p class="eq-foot muted">
-                round_w: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0.
-                tournament_w = first-place points ÷ 200; when missing, assume 20 points (20 ÷ 200).
-              </p>
+              <div class="eq-foot eq-foot--clutch muted">
+                <div class="eq-clutch-block">
+                  <div class="eq-clutch-k"><code>round_w</code></div>
+                  <ul class="eq-clutch-rounds">
+                    <li>Final — 2.0</li>
+                    <li>Semi — 1.5</li>
+                    <li>Quarter — 1.25</li>
+                    <li>Round of 16 — 1.1</li>
+                    <li>Pool — 0.75</li>
+                    <li>Default — 1.0</li>
+                  </ul>
+                </div>
+                <div class="eq-clutch-block">
+                  <div class="eq-clutch-k"><code>tournament_w</code></div>
+                  <p class="eq-clutch-tournament">
+                    First-place points ÷ 200. If VIS omits points, use <strong>20</strong> as the
+                    numerator (so weight = 20 ÷ 200).
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

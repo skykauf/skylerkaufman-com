@@ -313,6 +313,65 @@
   color: var(--mm-muted);
 }
 
+/* Clutchness step: stacked definitions (no long single-line footnote) */
+.math-meteor .eq-math--clutch .eq-foot--clutch {
+  margin-top: 0.75rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(232, 165, 75, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.math-meteor .eq-clutch-block {
+  min-width: 0;
+}
+
+.math-meteor .eq-clutch-k {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 165, 75, 0.75);
+  margin-bottom: 0.35rem;
+}
+
+.math-meteor .eq-clutch-k code {
+  font-size: 0.88em;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.math-meteor .eq-clutch-rounds {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #b8b0a4;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.2rem 0.65rem;
+}
+
+@media (min-width: 420px) {
+  .math-meteor .eq-clutch-rounds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.math-meteor .eq-clutch-tournament {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #b8b0a4;
+}
+
+.math-meteor .eq-clutch-tournament strong {
+  color: #d8d0c4;
+  font-weight: 600;
+}
+
 @media (max-width: 720px) {
   .math-meteor .eq-row {
     grid-template-columns: 1fr;
