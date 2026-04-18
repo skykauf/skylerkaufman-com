@@ -21,3 +21,10 @@ sources:
         description: "Tournament rounds (structure) from GetBeachRoundList"
       - name: raw_fivb_team_rankings
         description: "World Tour and Olympic selection rankings from GetBeachWorldTourRanking / GetBeachOlympicSelectionRanking"
+
+  - name: raw_vw
+    description: "Volleyball World website (HTML), not the VIS API — see etl/vw_statistics.py"
+    schema: raw
+    tables:
+      - name: raw_vw_player_tournament_stats
+        description: "BPT per-tournament player statistics from en.volleyballworld.com (sitemap → stat subpages)"

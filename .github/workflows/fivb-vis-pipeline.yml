@@ -1,0 +1,64 @@
+# FIVB VIS pipeline: VIS ETL -> dbt -> Elo (Supabase Postgres).
+# Volleyball World HTML statistics: fivb-vw-statistics.yml (same daily cron as this via trigger-fivb-pipelines).
+# Vercel cron calls api/trigger-fivb-pipelines (or api/trigger-fivb-vis-pipeline for VIS-only), which dispatches this workflow with database_url
+# from Vercel env (no DATABASE_URL secret required on GitHub for that path).
+#
+# Optional: set repository secret DATABASE_URL and run from Actions UI without
+# pasting the URL, or re-add a schedule block that uses the secret only.
+
+name: FIVB VIS pipeline (Supabase)
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_url:
+        description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
+        required: false
+        type: string
+
+concurrency:
+  group: fivb-vis-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+      ETL_MAX_WORKERS: "12"
+      ETL_FORCE_DIM_REFRESH: "1"
+      ETL_EVENTS_REFRESH_HOURS: "168"
+      ETL_TEAMS_REFRESH_HOURS: "72"
+      ETL_PLAYERS_REFRESH_HOURS: "168"
+    defaults:
+      run:
+        working-directory: fivb-pipeline
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Mask DATABASE_URL in logs
+        run: echo "::add-mask::${DATABASE_URL}"
+
+      - name: Require DATABASE_URL
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::No DATABASE_URL. Use the Vercel trigger (passes workflow input), or set repository secret DATABASE_URL and run workflow_dispatch with an empty input."
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: fivb-pipeline/requirements-cron.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-cron.txt
+
+      - name: Run FIVB VIS pipeline
+        run: python run_fivb_vis_pipeline.py

@@ -221,6 +221,19 @@ def ensure_raw_tables(engine: Engine) -> None:
             primary key (ranking_type, snapshot_date, gender, position)
         );
         """,
+        """
+        create table if not exists raw.raw_vw_player_tournament_stats (
+            event_key        text not null,
+            stat_url         text not null,
+            vw_player_id     bigint not null,
+            display_rank     integer,
+            player_name      text,
+            federation       text,
+            metrics          jsonb not null,
+            ingested_at      timestamptz default now(),
+            primary key (stat_url, vw_player_id)
+        );
+        """,
     ]
 
     with engine.begin() as conn:
@@ -250,6 +263,7 @@ def ensure_raw_tables(engine: Engine) -> None:
         "ALTER TABLE raw.raw_fivb_rounds ADD PRIMARY KEY (round_id)",
         "ALTER TABLE raw.raw_fivb_round_rankings ADD PRIMARY KEY (round_id, position)",
         "ALTER TABLE raw.raw_fivb_team_rankings ADD PRIMARY KEY (ranking_type, snapshot_date, gender, position)",
+        "ALTER TABLE raw.raw_vw_player_tournament_stats ADD PRIMARY KEY (stat_url, vw_player_id)",
     ]:
         try:
             with engine.begin() as conn:
@@ -295,6 +309,7 @@ def truncate_raw_tables(engine: Engine) -> None:
         "raw.raw_fivb_tournaments",
         "raw.raw_fivb_players",
         "raw.raw_fivb_events",
+        "raw.raw_vw_player_tournament_stats",
     ]
     table_list = ", ".join(tables)
     with engine.begin() as conn:
@@ -357,6 +372,7 @@ RAW_CONFLICT_COLUMNS: dict[str, tuple[str, ...]] = {
     "raw.raw_fivb_rounds": ("round_id",),
     "raw.raw_fivb_round_rankings": ("round_id", "position"),
     "raw.raw_fivb_team_rankings": ("ranking_type", "snapshot_date", "gender", "position"),
+    "raw.raw_vw_player_tournament_stats": ("stat_url", "vw_player_id"),
 }
 
 

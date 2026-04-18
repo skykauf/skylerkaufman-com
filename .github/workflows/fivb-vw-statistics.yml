@@ -1,12 +1,8 @@
-# Full FIVB pipeline: VIS ETL -> dbt models -> Elo tables -> Supabase Postgres.
-# Intended to run on GitHub-hosted runners (long timeout). Vercel cron calls
-# api/trigger-fivb-pipeline, which dispatches this workflow with database_url
-# from Vercel env (no DATABASE_URL secret required on GitHub for that path).
-#
-# Optional: set repository secret DATABASE_URL and run from Actions UI without
-# pasting the URL, or re-add a schedule block that uses the secret only.
+# Volleyball World BPT statistics only (HTML from sitemap → raw.raw_vw_player_tournament_stats).
+# Isolated from the VIS/dbt/Elo pipeline so scraper or HTML changes do not fail the main job.
+# Vercel daily cron: /api/trigger-fivb-pipelines (also /api/trigger-fivb-vw-statistics for VW-only).
 
-name: FIVB pipeline (Supabase)
+name: FIVB VW statistics (Supabase)
 
 on:
   workflow_dispatch:
@@ -17,21 +13,17 @@ on:
         type: string
 
 concurrency:
-  group: fivb-pipeline
+  group: fivb-vw-statistics
   cancel-in-progress: false
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 180
     env:
       PYTHONUNBUFFERED: "1"
       DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
-      ETL_MAX_WORKERS: "12"
-      ETL_FORCE_DIM_REFRESH: "1"
-      ETL_EVENTS_REFRESH_HOURS: "168"
-      ETL_TEAMS_REFRESH_HOURS: "72"
-      ETL_PLAYERS_REFRESH_HOURS: "168"
+      ETL_VW_STATS_WORKERS: "8"
     defaults:
       run:
         working-directory: fivb-pipeline
@@ -46,7 +38,7 @@ jobs:
       - name: Require DATABASE_URL
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::No DATABASE_URL. Use the Vercel trigger (passes workflow input), or set repository secret DATABASE_URL and run workflow_dispatch with an empty input."
+            echo "::error::No DATABASE_URL. Use the Vercel trigger, or set repository secret DATABASE_URL."
             exit 1
           fi
 
@@ -60,5 +52,5 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-cron.txt
 
-      - name: Run pipeline
-        run: python run_full_pipeline.py
+      - name: Run VW statistics ingest
+        run: python scripts/run_vw_statistics.py

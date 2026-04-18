@@ -96,11 +96,19 @@ The **`fivb-pipeline/`** directory is the full ingest and modeling stack ported 
 
 ### Why Vercel triggers GitHub Actions?
 
-The full run can take **on the order of an hour** (VIS ingest, `dbt`, Elo). That does not fit Vercel serverless limits, so **Vercel only schedules a tiny function** that **dispatches** **`.github/workflows/fivb-pipeline.yml`** on GitHub. The workflow runs on **`ubuntu-latest`** with a **180-minute** timeout.
+The FIVB VIS pipeline run can take **on the order of an hour** (VIS ingest, `dbt`, Elo). That does not fit Vercel serverless limits, so **Vercel only schedules a tiny function** that **dispatches** **`.github/workflows/fivb-vis-pipeline.yml`** on GitHub. The workflow runs on **`ubuntu-latest`** with a **360-minute** timeout.
 
 ### Daily schedule (Vercel → GitHub)
 
-**`vercel.json`** runs **`/api/trigger-fivb-pipeline`** daily at **06:00 UTC**. That handler (with **`Authorization: Bearer $CRON_SECRET`**) calls GitHub’s API to start **`workflow_dispatch`** on **`fivb-pipeline.yml`**, passing your **`DATABASE_URL`** from Vercel as the workflow input **`database_url`**. You do **not** need a **`DATABASE_URL`** repository secret on GitHub for that path.
+**`vercel.json`** runs **one** cron job (same **`Authorization: Bearer $CRON_SECRET`** as other cron routes):
+
+| Path | Schedule (UTC) | GitHub workflows |
+|------|----------------|------------------|
+| **`/api/trigger-fivb-pipelines`** | 06:00 | **`fivb-vis-pipeline.yml`** (VIS ETL, dbt, Elo) **and** **`fivb-vw-statistics.yml`** (Volleyball World HTML → `raw.raw_vw_player_tournament_stats`) |
+
+You can still call **`/api/trigger-fivb-vis-pipeline`** or **`/api/trigger-fivb-vw-statistics`** manually to dispatch a **single** workflow.
+
+Each handler calls GitHub **`workflow_dispatch`** with your **`DATABASE_URL`** from Vercel as **`database_url`**. You do **not** need a **`DATABASE_URL`** repository secret on GitHub for that path.
 
 **Vercel environment variables:**
 
@@ -121,7 +129,7 @@ From **`fivb-pipeline/`** with Python 3.12:
 ```bash
 pip install -r requirements-cron.txt
 export DATABASE_URL='postgresql://...'
-python run_full_pipeline.py
+python run_fivb_vis_pipeline.py
 ```
 
 Same behavior as the original **`scripts/run_pipeline.sh`** (incremental raw upserts, `dbt run`, Elo compute).

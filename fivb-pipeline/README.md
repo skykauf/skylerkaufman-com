@@ -118,6 +118,8 @@ The **`etl/vis_client.py`** module implements these requests (JSON responses, no
 - `raw_fivb_results` (tournament finishing positions from [GetBeachTournamentRanking](https://www.fivb.org/VisSDK/VisWebService/#GetBeachTournamentRanking.html))
 - `raw_fivb_players` (player details from VIS GetPlayerList, single request)
 
+**Beach Pro Tour statistics (Volleyball World HTML)** — not from VIS. The same daily Vercel cron as the VIS pipeline (**`/api/trigger-fivb-pipelines`**, default **06:00 UTC**) also dispatches **`.github/workflows/fivb-vw-statistics.yml`**. You can still trigger VW only via **`/api/trigger-fivb-vw-statistics`**. **`etl/vw_statistics.py`** reads [en.volleyballworld.com sitemap](https://en.volleyballworld.com/sitemap.xml) for BPT URLs matching `.../statistics/{men,women}/best-*`, fetches each page, and upserts into **`raw.raw_vw_player_tournament_stats`**. Local / manual: `python scripts/run_vw_statistics.py` with `DATABASE_URL` set. Tune with `ETL_VW_STATS_MAX_URLS`, `ETL_VW_STATS_WORKERS`, `ETL_VW_STATS_REQUEST_DELAY`. Demo: `python3 scripts/demo_vw_statistics.py --live --max-urls 8`.
+
 Run the ETL. It loads **events**, **tournaments**, **teams**, and **players** in single requests; then **all matches in one bulk GetBeachMatchList call** (no filter); then **per-tournament** results and rounds:
 
 ```bash
