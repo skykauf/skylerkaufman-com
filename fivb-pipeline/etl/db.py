@@ -236,9 +236,14 @@ def ensure_raw_tables(engine: Engine) -> None:
         """,
     ]
 
+    # Commit DDL in its own transaction. Optional ALTERs below can fail on older DBs; in Postgres a
+    # failed statement aborts the whole transaction, so running them in the same begin() as CREATE
+    # would roll back new tables (e.g. raw_vw_player_tournament_stats) while existing tables remain.
     with engine.begin() as conn:
         for ddl in ddl_statements:
             conn.execute(text(ddl))
+
+    with engine.begin() as conn:
         try:
             conn.execute(
                 text(
@@ -247,6 +252,8 @@ def ensure_raw_tables(engine: Engine) -> None:
             )
         except Exception:
             pass
+
+    with engine.begin() as conn:
         try:
             conn.execute(text("ALTER TABLE raw.raw_fivb_results ADD COLUMN IF NOT EXISTS payload jsonb"))
         except Exception:
