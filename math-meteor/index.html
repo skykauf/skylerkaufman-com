@@ -142,8 +142,8 @@
               <div class="eq-note-body">
                 <strong>Recent form</strong>
                 <p>
-                  From each player&rsquo;s recent matches: win rate, average set differential, and Elo
-                  trend across the window.
+                  Win rate and average set differential use up to 12 recent matches with a score line;
+                  <code>elo_trend</code> is defined separately from flat Elo on the ordered match list.
                 </p>
               </div>
             </div>
@@ -152,6 +152,11 @@
               \text{recent\_form} = (\,&\text{win\_rate},\,\text{avg\_set\_diff}, \\
               &\text{elo\_trend})
               \end{aligned}$$
+              <p class="eq-foot muted">
+                <code>elo_trend</code> = flat Elo after the newest match that has a rating, minus flat
+                Elo at the snapshot up to 12 rating entries earlier on that same list (0 if fewer than
+                two ratings).
+              </p>
             </div>
           </div>
           <div class="eq-row">
