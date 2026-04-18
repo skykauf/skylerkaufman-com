@@ -161,11 +161,11 @@
       drift: s * 0.011,
       phase: 0.8,
       ring: false,
-      core: [106, 116, 180],
-      edge: [48, 56, 92],
-      rim: [162, 174, 228],
-      href: "/fivb-explorer/matchup-predictor/",
-      label: "Matchup Predictor",
+      core: [148, 118, 88],
+      edge: [62, 48, 38],
+      rim: [210, 185, 150],
+      href: "/model-math-hub/",
+      label: "Model Math Hub",
     });
     planets.push({
       relX: 0.72,
