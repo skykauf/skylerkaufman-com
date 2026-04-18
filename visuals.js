@@ -161,22 +161,24 @@
       drift: s * 0.011,
       phase: 0.8,
       ring: false,
-      core: [148, 118, 88],
-      edge: [62, 48, 38],
-      rim: [210, 185, 150],
-      href: "/model-math-hub/",
-      label: "Model Math Hub",
+      core: [106, 116, 180],
+      edge: [48, 56, 92],
+      rim: [162, 174, 228],
+      href: "/fivb-explorer/matchup-predictor/",
+      label: "Matchup Predictor",
     });
     planets.push({
       relX: 0.72,
       relY: 0.78,
-      r: s * (small ? 0.035 : 0.042),
+      r: s * (small ? 0.028 : 0.034),
       drift: s * 0.015,
       phase: 2.4,
       ring: false,
-      core: [140, 100, 85],
-      edge: [72, 48, 38],
-      rim: [210, 170, 140],
+      core: [180, 140, 95],
+      edge: [72, 52, 36],
+      rim: [235, 200, 155],
+      href: "/math-meteor/",
+      label: "Math Meteor",
     });
     if (!small) {
       planets.push({
