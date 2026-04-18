@@ -210,23 +210,112 @@
   color: var(--mm-amber-dim);
 }
 
-.math-meteor .equations {
+/* Side-by-side: prose / pseudocode (left) · equations (right) */
+.math-meteor .eq-block {
   border: 1px solid rgba(232, 165, 75, 0.12);
   border-left: 3px solid var(--mm-amber-dim);
   background: linear-gradient(180deg, rgba(12, 14, 22, 0.95), rgba(8, 9, 14, 0.98));
   border-radius: 10px;
-  padding: 1rem 1.1rem 1.05rem;
+  padding: 0;
+  overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.math-meteor .equations > p:first-child {
+.math-meteor .eq-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1rem 1.35rem;
+  align-items: start;
+  padding: 1rem 1.15rem 1.05rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.math-meteor .eq-row:last-child {
+  border-bottom: none;
+}
+
+.math-meteor .eq-note {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.math-meteor .eq-step {
+  flex: 0 0 auto;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--mm-amber);
+  background: rgba(232, 165, 75, 0.1);
+  border: 1px solid rgba(232, 165, 75, 0.22);
+  line-height: 1;
+}
+
+.math-meteor .eq-note-body {
+  min-width: 0;
+}
+
+.math-meteor .eq-note-body strong {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #b8a990;
+  margin-bottom: 0.35rem;
+}
+
+.math-meteor .eq-note-body p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #c4beb4;
+}
+
+.math-meteor .eq-math {
+  min-width: 0;
+  padding-left: 1rem;
+  margin: 0;
+  border-left: 1px solid rgba(232, 165, 75, 0.15);
+}
+
+.math-meteor .eq-math .eq {
+  margin: 0.4rem 0;
+}
+
+.math-meteor .eq-math .eq:first-child {
   margin-top: 0;
 }
 
-.math-meteor .equations strong {
-  color: #b8a990;
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
+.math-meteor .eq-math .eq:last-child {
+  margin-bottom: 0;
+}
+
+.math-meteor .eq.pseudo {
+  color: #c9b8a8;
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .math-meteor .eq-row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    padding: 0.95rem 1rem;
+  }
+
+  .math-meteor .eq-math {
+    border-left: none;
+    padding-left: 0;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(232, 165, 75, 0.12);
+  }
 }
 
 .math-meteor .eq {

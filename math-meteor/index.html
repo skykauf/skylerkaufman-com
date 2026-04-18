@@ -33,46 +33,94 @@
           We use an Elo-style rating that updates after every match. Each player starts at 1500, and
           your rating goes up when you beat expectations and down when you underperform.
         </p>
-        <ul class="elo-list">
-          <li>Each beach team's pre-match strength is the average of its two players' ratings.</li>
-          <li>Expected win chance comes from the rating gap between the two teams.</li>
-          <li>After the result, the team rating shift is split evenly across both teammates.</li>
-          <li>Base K-factor is 32. In round-weighted Elo, K is multiplied by a round weight.</li>
-        </ul>
-
-        <div class="equations" aria-label="Elo equations">
-          <p><strong>1) Team rating before match</strong></p>
-          <p class="eq">
-            TeamElo<sub>1</sub> = (Elo<sub>1A</sub> + Elo<sub>1B</sub>) / 2
-          </p>
-          <p class="eq">
-            TeamElo<sub>2</sub> = (Elo<sub>2A</sub> + Elo<sub>2B</sub>) / 2
-          </p>
-
-          <p><strong>2) Expected score (win probability)</strong></p>
-          <p class="eq">
-            E<sub>1</sub> = 1 / (1 + 10<sup>(TeamElo<sub>2</sub> - TeamElo<sub>1</sub>) / 400</sup>)
-          </p>
-
-          <p><strong>3) Team rating update</strong></p>
-          <p class="eq">
-            ΔTeam<sub>1</sub> = K × (S<sub>1</sub> - E<sub>1</sub>)
-          </p>
-          <p class="eq">S<sub>1</sub> = 1 if Team 1 wins, else 0</p>
-
-          <p><strong>4) Player update (split evenly between teammates)</strong></p>
-          <p class="eq">
-            NewElo<sub>1A</sub> = OldElo<sub>1A</sub> + 0.5 × ΔTeam<sub>1</sub>
-          </p>
-          <p class="eq">
-            NewElo<sub>1B</sub> = OldElo<sub>1B</sub> + 0.5 × ΔTeam<sub>1</sub>
-          </p>
-
-          <p><strong>5) Round-weighted Elo variant</strong></p>
-          <p class="eq">ΔTeam<sub>1</sub> = K × Weight × (S<sub>1</sub> - E<sub>1</sub>)</p>
-          <p class="eq muted">
-            Weights: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0
-          </p>
+        <div class="eq-block" aria-label="Elo equations">
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">1</span>
+              <div class="eq-note-body">
+                <strong>Team strength</strong>
+                <p>
+                  Each beach team&rsquo;s pre-match strength is the average of its two players&rsquo;
+                  ratings.
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                TeamElo<sub>1</sub> = (Elo<sub>1A</sub> + Elo<sub>1B</sub>) / 2
+              </p>
+              <p class="eq">
+                TeamElo<sub>2</sub> = (Elo<sub>2A</sub> + Elo<sub>2B</sub>) / 2
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">2</span>
+              <div class="eq-note-body">
+                <strong>Expected win</strong>
+                <p>Expected win chance comes from the rating gap between the two teams.</p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                E<sub>1</sub> = 1 / (1 + 10<sup>(TeamElo<sub>2</sub> - TeamElo<sub>1</sub>) / 400</sup>)
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">3</span>
+              <div class="eq-note-body">
+                <strong>Team rating update</strong>
+                <p>
+                  After the result, shift the team rating by surprise (actual minus expected). K is
+                  typically 32.
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                ΔTeam<sub>1</sub> = K × (S<sub>1</sub> - E<sub>1</sub>)
+              </p>
+              <p class="eq">S<sub>1</sub> = 1 if Team 1 wins, else 0</p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">4</span>
+              <div class="eq-note-body">
+                <strong>Player update</strong>
+                <p>Split the team rating shift evenly across both teammates.</p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                NewElo<sub>1A</sub> = OldElo<sub>1A</sub> + 0.5 × ΔTeam<sub>1</sub>
+              </p>
+              <p class="eq">
+                NewElo<sub>1B</sub> = OldElo<sub>1B</sub> + 0.5 × ΔTeam<sub>1</sub>
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">5</span>
+              <div class="eq-note-body">
+                <strong>Round weight</strong>
+                <p>
+                  In round-weighted Elo, multiply K by a weight that depends on how deep the match is
+                  in the bracket.
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">ΔTeam<sub>1</sub> = K × Weight × (S<sub>1</sub> - E<sub>1</sub>)</p>
+              <p class="eq muted">
+                Weights: Final 2.0, Semi 1.5, Quarter 1.25, Round of 16 1.1, Pool 0.75, Default 1.0
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -84,38 +132,77 @@
           then estimates win probability and a distribution over final scores.
         </p>
 
-        <ul class="elo-list">
-          <li>
-            From recent matches: win rate, average set differential per match, and Elo trend across
-            the window.
-          </li>
-          <li>
-            <strong>Form points</strong> per player combine those signals (same weighting as the live
-            tool):
-          </li>
-        </ul>
-
-        <div class="equations" aria-label="Form points">
-          <p class="eq">
-            formPoints = 110 × (winRate − 0.5) + 38 × avgSetDiff + 0.2 × eloTrend
-          </p>
-        </div>
-
-        <ul class="elo-list">
-          <li>
-            <strong>Team career Elo</strong> = average of the two players&rsquo; latest Elo values.
-          </li>
-          <li>
-            <strong>Team form points</strong> = average of the two players&rsquo; form points.
-          </li>
-          <li><strong>Team rating</strong> used for the match = career Elo + form points.</li>
-        </ul>
-
-        <div class="equations" aria-label="Match win probability">
-          <p><strong>Match win probability (Team A)</strong></p>
-          <p class="eq">
-            P(A) = 1 / (1 + 10<sup>(rating<sub>B</sub> − rating<sub>A</sub>) / 400</sup>)
-          </p>
+        <div class="eq-block" aria-label="Matchup model">
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">1</span>
+              <div class="eq-note-body">
+                <strong>Recent form</strong>
+                <p>
+                  From each player&rsquo;s recent matches: win rate, average set differential, and Elo
+                  trend across the window.
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq pseudo">
+                recentForm = winRate, avgSetDiff, eloTrend
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">2</span>
+              <div class="eq-note-body">
+                <strong>Form points</strong>
+                <p>
+                  Combine those signals into one number per player (same weighting as the live tool).
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                formPoints = 110 × (winRate − 0.5) + 38 × avgSetDiff + 0.2 × eloTrend
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">3</span>
+              <div class="eq-note-body">
+                <strong>Team aggregates</strong>
+                <p>
+                  Average career Elo and form points across the two players on each team, then add them
+                  for the rating used in the match.
+                </p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                teamCareerElo = (elo<sub>1</sub> + elo<sub>2</sub>) / 2
+              </p>
+              <p class="eq">
+                teamFormPts = (formPts<sub>1</sub> + formPts<sub>2</sub>) / 2
+              </p>
+              <p class="eq">
+                teamRating = teamCareerElo + teamFormPts
+              </p>
+            </div>
+          </div>
+          <div class="eq-row">
+            <div class="eq-note">
+              <span class="eq-step" aria-hidden="true">4</span>
+              <div class="eq-note-body">
+                <strong>Match win probability</strong>
+                <p>Same logistic as Elo: compare the two team ratings.</p>
+              </div>
+            </div>
+            <div class="eq-math">
+              <p class="eq">
+                P(A) = 1 / (1 + 10<sup>(rating<sub>B</sub> − rating<sub>A</sub>) / 400</sup>)
+              </p>
+            </div>
+          </div>
         </div>
 
         <p class="lede lede--tight-top">
