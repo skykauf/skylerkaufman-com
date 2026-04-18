@@ -33,18 +33,6 @@ body.volley-page {
   width: 100%;
 }
 
-.volley-back {
-  display: inline-block;
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.volley-back:hover {
-  color: var(--accent);
-}
-
 .volley-title {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;

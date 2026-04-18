@@ -19,8 +19,8 @@ body.cosmic-site {
   min-height: 100dvh;
 }
 
-/* Stack top-level UI above the fixed canvas (canvas is the first child). */
-body.cosmic-site > :not(#bg) {
+/* Stack top-level UI above the fixed canvas (toolbar manages its own z-index). */
+body.cosmic-site > :not(#bg):not(.cosmic-toolbar) {
   position: relative;
   z-index: 1;
 }
@@ -28,4 +28,125 @@ body.cosmic-site > :not(#bg) {
 /* Flatten page-level gradients so the canvas reads clearly; cards keep their own surfaces. */
 body.cosmic-site.math-meteor {
   background: var(--cosmic-bg);
+}
+
+/* --- Inner pages: compact planet toolbar (Home left, site areas right) --- */
+.cosmic-toolbar {
+  --cosmic-toolbar-accent: #c4a574;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  padding: 0.55rem 1rem;
+  margin: 0;
+  background: rgba(10, 10, 14, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(196, 165, 116, 0.14);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.cosmic-toolbar__sites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem 0.55rem;
+  flex: 1;
+  min-width: min(100%, 12rem);
+}
+
+.cosmic-toolbar__link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--cosmic-toolbar-accent);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  max-width: 4.5rem;
+  text-align: center;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.cosmic-toolbar__link:hover,
+.cosmic-toolbar__link:focus-visible {
+  color: #e8d4b0;
+}
+
+.cosmic-toolbar__link:focus-visible {
+  outline: 2px solid var(--cosmic-toolbar-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.cosmic-toolbar__link--current {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.cosmic-toolbar__orb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow:
+    inset -5px -6px 10px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(255, 255, 255, 0.06);
+}
+
+.cosmic-toolbar__link--home .cosmic-toolbar__orb {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgb(150, 118, 175),
+    rgb(52, 36, 68) 58%,
+    rgb(24, 18, 32) 100%
+  );
+}
+
+.cosmic-toolbar__link--volley .cosmic-toolbar__orb {
+  background: radial-gradient(
+    circle at 32% 30%,
+    rgb(95, 125, 145),
+    rgb(32, 48, 58) 62%,
+    rgb(18, 26, 32) 100%
+  );
+  box-shadow:
+    inset -5px -6px 10px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(130, 165, 188, 0.35),
+    0 0 16px rgba(255, 255, 255, 0.06);
+}
+
+.cosmic-toolbar__link--fivb .cosmic-toolbar__orb {
+  background: radial-gradient(
+    circle at 30% 28%,
+    rgb(105, 165, 145),
+    rgb(38, 72, 62) 60%,
+    rgb(18, 32, 28) 100%
+  );
+}
+
+.cosmic-toolbar__link--matchup .cosmic-toolbar__orb {
+  background: radial-gradient(
+    circle at 32% 30%,
+    rgb(130, 140, 205),
+    rgb(52, 58, 95) 62%,
+    rgb(28, 30, 48) 100%
+  );
+}
+
+.cosmic-toolbar__link--math .cosmic-toolbar__orb {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgb(215, 175, 125),
+    rgb(95, 65, 42) 58%,
+    rgb(38, 28, 20) 100%
+  );
 }

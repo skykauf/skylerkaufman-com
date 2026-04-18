@@ -13,6 +13,37 @@
   </head>
   <body class="cosmic-site">
     <canvas id="bg" aria-hidden="true"></canvas>
+    <nav class="cosmic-toolbar" aria-label="SkylerKaufman.com areas">
+      <a href="/" class="cosmic-toolbar__link cosmic-toolbar__link--home">
+        <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+        <span class="cosmic-toolbar__label">Home</span>
+      </a>
+      <div class="cosmic-toolbar__sites">
+        <a href="/volley-chat/" class="cosmic-toolbar__link cosmic-toolbar__link--volley">
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Volley Chat</span>
+        </a>
+        <a
+          href="/fivb-explorer/"
+          class="cosmic-toolbar__link cosmic-toolbar__link--fivb cosmic-toolbar__link--current"
+          aria-current="page"
+        >
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">FIVB</span>
+        </a>
+        <a
+          href="/fivb-explorer/matchup-predictor/"
+          class="cosmic-toolbar__link cosmic-toolbar__link--matchup"
+        >
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Matchup</span>
+        </a>
+        <a href="/math-meteor/" class="cosmic-toolbar__link cosmic-toolbar__link--math">
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Math Meteor</span>
+        </a>
+      </div>
+    </nav>
     <main class="page">
       <header class="hero">
         <p class="eyebrow">Another Planet</p>
@@ -22,10 +53,7 @@
           distribution, and matches by year.
         </p>
         <p class="actions">
-          <a href="/" class="link">Back Home</a>
-          <a href="/math-meteor/" class="link">Math Meteor</a>
           <a href="/fivb-explorer/table-explorer/" class="link">Open Table Explorer</a>
-          <a href="/fivb-explorer/matchup-predictor/" class="link">Open Matchup Predictor</a>
           <button id="refresh" type="button">Refresh</button>
         </p>
         <p id="status" class="status">Loading profile...</p>

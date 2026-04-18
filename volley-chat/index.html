@@ -10,8 +10,38 @@
   </head>
   <body class="volley-page cosmic-site">
     <canvas id="bg" aria-hidden="true"></canvas>
+    <nav class="cosmic-toolbar" aria-label="SkylerKaufman.com areas">
+      <a href="/" class="cosmic-toolbar__link cosmic-toolbar__link--home">
+        <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+        <span class="cosmic-toolbar__label">Home</span>
+      </a>
+      <div class="cosmic-toolbar__sites">
+        <a
+          href="/volley-chat/"
+          class="cosmic-toolbar__link cosmic-toolbar__link--volley cosmic-toolbar__link--current"
+          aria-current="page"
+        >
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Volley Chat</span>
+        </a>
+        <a href="/fivb-explorer/" class="cosmic-toolbar__link cosmic-toolbar__link--fivb">
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">FIVB</span>
+        </a>
+        <a
+          href="/fivb-explorer/matchup-predictor/"
+          class="cosmic-toolbar__link cosmic-toolbar__link--matchup"
+        >
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Matchup</span>
+        </a>
+        <a href="/math-meteor/" class="cosmic-toolbar__link cosmic-toolbar__link--math">
+          <span class="cosmic-toolbar__orb" aria-hidden="true"></span>
+          <span class="cosmic-toolbar__label">Math Meteor</span>
+        </a>
+      </div>
+    </nav>
     <header class="volley-header">
-      <a class="volley-back" href="/">← Home</a>
       <h1 class="volley-title">Volley Chat</h1>
       <p class="volley-sub">Uses ChatGPT with built-in access to FIVB VIS data.</p>
       <p class="volley-sub">

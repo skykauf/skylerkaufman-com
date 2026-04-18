@@ -2,14 +2,18 @@
   const canvas = document.getElementById("bg");
   if (!canvas) return;
 
-  /** Planet hit targets navigate only on `/` so inner apps stay clickable. */
-  function cosmicNavEnabled() {
+  /** Full-sky canvas planets + click/hover nav only on `/` (inner pages use the DOM toolbar). */
+  function isHomeSky() {
     try {
       const p = window.location.pathname;
       return p === "/" || p === "";
     } catch {
       return false;
     }
+  }
+
+  function cosmicNavEnabled() {
+    return isHomeSky();
   }
 
   const ctx = canvas.getContext("2d");
@@ -123,6 +127,8 @@
 
   function initPlanets() {
     planets.length = 0;
+    if (!isHomeSky()) return;
+
     const s = Math.min(w, h);
     const small = w < 520;
 
