@@ -27,11 +27,8 @@ def main() -> None:
     from etl.vw_statistics import run_vw_statistics_ingestion
 
     normalize_database_url_for_pipeline()
-    st = run_vw_statistics_ingestion()
-    print(
-        "VW statistics ingest complete:",
-        f"urls={st.get('urls')} rows={st.get('rows')} empty_pages={st.get('empty')} errors={st.get('errors')}",
-    )
+    run_vw_statistics_ingestion()
+    # Final stats are logged once at INFO by etl.vw_statistics (avoids duplicating the same line).
 
 
 if __name__ == "__main__":

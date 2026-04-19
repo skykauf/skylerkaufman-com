@@ -14,14 +14,17 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
+from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from tqdm import tqdm
 
@@ -36,6 +39,9 @@ USER_AGENT = (
 )
 
 _NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+
+# Season label in VW paths, e.g. .../competitions/beach-pro-tour-2025/events/...
+_BPT_SEASON_YEAR = re.compile(r"beach-pro-tour[-_](?P<year>19\d{2}|20\d{2})\b", re.IGNORECASE)
 
 
 def _int_env(key: str, default: int | None) -> int | None:
@@ -98,6 +104,28 @@ def event_key_from_stat_url(url: str) -> str:
     if idx == -1:
         return path
     return path[:idx]
+
+
+def bpt_season_year_from_event_key(event_key: str) -> int | None:
+    """
+    Extract Beach Pro Tour season year from the event path (beach-pro-tour-YYYY).
+    Returns None if no season token is found (caller should not treat as stale).
+    """
+    m = _BPT_SEASON_YEAR.search(event_key.replace("\\", "/"))
+    if not m:
+        return None
+    y = int(m.group("year"))
+    if 1990 <= y <= 2100:
+        return y
+    return None
+
+
+def load_ingested_vw_stat_urls(engine: Engine) -> set[str]:
+    """Distinct stat_url values already present in raw (at least one row per URL)."""
+    q = text("SELECT DISTINCT stat_url FROM raw.raw_vw_player_tournament_stats")
+    with engine.connect() as conn:
+        rows = conn.execute(q).fetchall()
+    return {str(r[0]) for r in rows if r[0]}
 
 
 def fetch_sitemap_stat_urls(
@@ -233,6 +261,7 @@ def run_vw_statistics_ingestion(
       ETL_VW_STATS_MAX_URLS — cap number of stat pages (for testing)
       ETL_VW_STATS_WORKERS — parallel fetch workers (default 6)
       ETL_VW_STATS_LOG_EVERY — progress log interval (default: 1 if ≤50 URLs else 10)
+      ETL_VW_STATS_FORCE_REFRESH — if 1/true, refetch all sitemap pages (ignore stale skip)
     """
     engine = engine or get_engine()
     ensure_raw_tables(engine)
@@ -240,24 +269,57 @@ def run_vw_statistics_ingestion(
     sm = sitemap_url or os.environ.get("ETL_VW_STATS_SITEMAP", DEFAULT_SITEMAP).strip()
     cap = max_urls if max_urls is not None else _int_env("ETL_VW_STATS_MAX_URLS", None)
     workers = max(1, int(os.environ.get("ETL_VW_STATS_WORKERS", str(max_workers))))
+    force_refresh = os.environ.get("ETL_VW_STATS_FORCE_REFRESH", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     session = _http_session()
     urls = fetch_sitemap_stat_urls(sm, session=session)
     if cap is not None and cap > 0:
         urls = urls[:cap]
 
+    current_year = datetime.now(timezone.utc).year
+    already = set() if force_refresh else load_ingested_vw_stat_urls(engine)
+    skipped_stale = 0
+    if not force_refresh and already:
+        kept: list[str] = []
+        for u in urls:
+            ek = event_key_from_stat_url(u)
+            season_y = bpt_season_year_from_event_key(ek)
+            if (
+                season_y is not None
+                and season_y < current_year
+                and u in already
+            ):
+                skipped_stale += 1
+                continue
+            kept.append(u)
+        if skipped_stale:
+            logger.info(
+                "VW statistics ingest: skipping %d stat page URL(s) already in DB for past BPT "
+                "seasons (season year < calendar year %d); older competition stats are assumed frozen",
+                skipped_stale,
+                current_year,
+            )
+        urls = kept
+
     total_urls = len(urls)
     log_every = _vw_stats_progress_log_every(total_urls=total_urls)
     logger.info(
-        "VW statistics ingest: %d stat page URL(s) to fetch (workers=%d, log_every=%d, sitemap=%s)",
+        "VW statistics ingest: %d stat page URL(s) to fetch (workers=%d, log_every=%d, sitemap=%s, "
+        "skipped_stale=%d, force_refresh=%s)",
         total_urls,
         workers,
         log_every,
         sm,
+        skipped_stale,
+        force_refresh,
     )
 
     rows_buffer: list[dict[str, Any]] = []
-    stats = {"urls": 0, "rows": 0, "empty": 0, "errors": 0}
+    stats = {"urls": 0, "rows": 0, "empty": 0, "errors": 0, "skipped_stale": skipped_stale}
 
     def flush() -> None:
         nonlocal rows_buffer
@@ -331,10 +393,12 @@ def run_vw_statistics_ingestion(
                 )
     flush()
     logger.info(
-        "VW statistics ingest finished: urls_ok=%d rows_upserted=%d empty_pages=%d errors=%d",
+        "VW statistics ingest finished: urls_ok=%d rows_upserted=%d empty_pages=%d errors=%d "
+        "skipped_stale=%d",
         stats["urls"],
         stats["rows"],
         stats["empty"],
         stats["errors"],
+        stats["skipped_stale"],
     )
     return stats

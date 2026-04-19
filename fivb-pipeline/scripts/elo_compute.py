@@ -240,7 +240,11 @@ def ensure_table(engine) -> None:
     );
     """
     with engine.begin() as conn:
-        conn.execute(text("drop table if exists core.player_elo_round_weighted_history"))
+        # Mart views (e.g. mart.player_elo_round_weighted_*) may reference this table; CASCADE
+        # drops dependents so init can proceed. dbt run (VIS pipeline step 3) recreates marts.
+        conn.execute(
+            text("drop table if exists core.player_elo_round_weighted_history cascade")
+        )
         for stmt in ddl.strip().split(";"):
             stmt = stmt.strip()
             if stmt:
