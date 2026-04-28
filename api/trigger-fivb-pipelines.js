@@ -13,6 +13,14 @@ const {
 
 module.exports = async function handler(req, res) {
   try {
+    // Lock down dispatch to scheduler-only traffic; do not allow public/manual triggering.
+    const cronHeader = req.headers?.["x-vercel-cron"];
+    if (!cronHeader) {
+      return res.status(403).json({
+        error: "Forbidden. This endpoint accepts Vercel Cron requests only.",
+      });
+    }
+
     const auth = authorizeFivbGithubDispatch(req, { logPrefix: "[trigger-fivb-pipelines]" });
     if (!auth.ok) {
       if (auth.allow) res.setHeader("Allow", auth.allow);
