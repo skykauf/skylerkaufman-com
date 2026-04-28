@@ -1,6 +1,7 @@
 /**
- * Vercel Cron: dispatches both FIVB GitHub Actions workflows in one request —
- * `fivb-vis-pipeline.yml` (VIS ETL + dbt + Elo) and `fivb-vw-statistics.yml` (Volleyball World HTML).
+ * Vercel Cron: dispatches FIVB GitHub Actions workflows in one request —
+ * `fivb-vis-pipeline.yml` (VIS raw ETL, which chains dbt + Elo) and
+ * `fivb-vw-statistics.yml` (Volleyball World HTML).
  *
  * Same env as `trigger-fivb-vis-pipeline` / `trigger-fivb-vw-statistics`: CRON_SECRET,
  * DATABASE_URL, GITHUB_PAT, GITHUB_REPO, GITHUB_DISPATCH_REF.
@@ -29,11 +30,13 @@ module.exports = async function handler(req, res) {
     const { ctx } = auth;
     const inputs = { database_url: ctx.databaseUrl };
     const rawWorkflow = String(req.query?.workflow || "").toLowerCase();
-    const workflow = rawWorkflow === "vis" || rawWorkflow === "vw" ? rawWorkflow : "both";
+    const workflow =
+      rawWorkflow === "vis" || rawWorkflow === "vw" || rawWorkflow === "dbt" ? rawWorkflow : "both";
 
     const runVis = workflow === "vis" || workflow === "both";
     const runVw = workflow === "vw" || workflow === "both";
-    const [vis, vw] = await Promise.all([
+    const runDbt = workflow === "dbt";
+    const [vis, vw, dbt] = await Promise.all([
       runVis
         ? githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-vis-pipeline.yml", {
             ref: ctx.ref,
@@ -48,10 +51,18 @@ module.exports = async function handler(req, res) {
             inputs,
           })
         : Promise.resolve({ ok: true, status: 0, detail: "skipped" }),
+      runDbt
+        ? githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-dbt-elo-pipeline.yml", {
+            ref: ctx.ref,
+            pat: ctx.pat,
+            inputs,
+          })
+        : Promise.resolve({ ok: true, status: 0, detail: "skipped" }),
     ]);
 
     const visOk = vis.ok;
     const vwOk = vw.ok;
+    const dbtOk = dbt.ok;
     if (!visOk && vis.status === 0) {
       console.error("[trigger-fivb-pipelines] VIS fetch failed:", vis.detail);
     }
@@ -64,14 +75,22 @@ module.exports = async function handler(req, res) {
     if (!vwOk && vw.status !== 0) {
       console.error("[trigger-fivb-pipelines] VW GitHub API error:", vw.status, vw.detail.slice(0, 500));
     }
+    if (!dbtOk && dbt.status === 0) {
+      console.error("[trigger-fivb-pipelines] dbt fetch failed:", dbt.detail);
+    }
+    if (!dbtOk && dbt.status !== 0) {
+      console.error("[trigger-fivb-pipelines] dbt GitHub API error:", dbt.status, dbt.detail.slice(0, 500));
+    }
 
-    if (visOk && vwOk) {
+    if (visOk && vwOk && dbtOk) {
       const message =
         workflow === "vis"
-          ? "FIVB VIS workflow dispatched."
+          ? "FIVB VIS raw workflow dispatched (it chains dbt + Elo)."
           : workflow === "vw"
             ? "FIVB VW statistics workflow dispatched."
-            : "Both FIVB workflows dispatched (VIS + Volleyball World statistics on GitHub).";
+            : workflow === "dbt"
+              ? "FIVB dbt + Elo workflow dispatched."
+              : "FIVB workflows dispatched (VIS raw→dbt/Elo + Volleyball World statistics on GitHub).";
       return res.status(202).json({
         ok: true,
         message,
@@ -81,6 +100,7 @@ module.exports = async function handler(req, res) {
         dispatches: {
           fivb_vis_pipeline: runVis ? { ok: true } : { ok: true, skipped: true },
           fivb_vw_statistics: runVw ? { ok: true } : { ok: true, skipped: true },
+          fivb_dbt_elo_pipeline: runDbt ? { ok: true } : { ok: true, skipped: true },
         },
       });
     }
@@ -102,6 +122,11 @@ module.exports = async function handler(req, res) {
           : vwOk
           ? { ok: true }
           : { ok: false, status: vw.status, detail: vw.detail.slice(0, 2000) },
+        fivb_dbt_elo_pipeline: !runDbt
+          ? { ok: true, skipped: true }
+          : dbtOk
+          ? { ok: true }
+          : { ok: false, status: dbt.status, detail: dbt.detail.slice(0, 2000) },
       },
     });
   } catch (err) {

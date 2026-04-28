@@ -1,12 +1,7 @@
-# FIVB VIS raw pipeline: VIS ETL/raw ingestion only (Supabase Postgres).
-# This workflow chains into fivb-dbt-elo-pipeline.yml via workflow_call so
-# transforms can also be run standalone without raw retrieval.
-# Volleyball World HTML statistics remains separate: fivb-vw-statistics.yml.
-#
-# Optional: set repository secret DATABASE_URL and run from Actions UI without
-# pasting the URL, or re-add a schedule block that uses the secret only.
+# FIVB transforms pipeline: Elo init -> dbt -> Elo compute (Supabase Postgres).
+# Can run standalone (workflow_dispatch) or be called from VIS raw pipeline.
 
-name: FIVB VIS raw pipeline (Supabase)
+name: FIVB dbt and Elo pipeline (Supabase)
 
 on:
   workflow_dispatch:
@@ -15,23 +10,23 @@ on:
         description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
         required: false
         type: string
+  workflow_call:
+    inputs:
+      database_url:
+        required: false
+        type: string
 
 concurrency:
-  group: fivb-vis-pipeline
+  group: fivb-dbt-elo-pipeline
   cancel-in-progress: false
 
 jobs:
-  raw:
+  run:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
       PYTHONUNBUFFERED: "1"
-      DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
-      ETL_MAX_WORKERS: "12"
-      ETL_FORCE_DIM_REFRESH: "1"
-      ETL_EVENTS_REFRESH_HOURS: "168"
-      ETL_TEAMS_REFRESH_HOURS: "72"
-      ETL_PLAYERS_REFRESH_HOURS: "168"
+      DATABASE_URL: ${{ inputs.database_url || github.event.inputs.database_url || secrets.DATABASE_URL }}
     defaults:
       run:
         working-directory: fivb-pipeline
@@ -60,12 +55,5 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-cron.txt
 
-      - name: Run FIVB VIS raw ingestion
-        run: python run_fivb_vis_raw_ingestion.py
-
-  dbt_elo:
-    needs: raw
-    uses: ./.github/workflows/fivb-dbt-elo-pipeline.yml
-    with:
-      database_url: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
-    secrets: inherit
+      - name: Run dbt and Elo pipeline
+        run: python run_fivb_dbt_elo_pipeline.py

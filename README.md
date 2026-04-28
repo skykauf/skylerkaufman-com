@@ -59,6 +59,7 @@ The backend supports structured tools including:
 - `similar_players`
 - `explain_ranking`
 - `top_players_by_country`
+- `top_players_by_entry_points`
 - `active_players`
 - `inactive_players`
 - `best_finishes_by_player`
@@ -96,7 +97,9 @@ The **`fivb-pipeline/`** directory is the full ingest and modeling stack ported 
 
 ### Why Vercel triggers GitHub Actions?
 
-The FIVB VIS pipeline run can take **on the order of an hour** (VIS ingest, `dbt`, Elo). That does not fit Vercel serverless limits, so **Vercel only schedules a tiny function** that **dispatches** **`.github/workflows/fivb-vis-pipeline.yml`** on GitHub. The workflow runs on **`ubuntu-latest`** with a **360-minute** timeout.
+The FIVB VIS pipeline run can take **on the order of an hour** (raw ingest, `dbt`, Elo). That does not fit Vercel serverless limits, so **Vercel only schedules a tiny function** that dispatches GitHub Actions:
+- **`.github/workflows/fivb-vis-pipeline.yml`** for VIS raw ingest, which then calls
+- **`.github/workflows/fivb-dbt-elo-pipeline.yml`** for transforms (`dbt` + Elo).
 
 ### Daily schedule (Vercel → GitHub)
 
@@ -104,9 +107,10 @@ The FIVB VIS pipeline run can take **on the order of an hour** (VIS ingest, `dbt
 
 | Path | Schedule (UTC) | GitHub workflows |
 |------|----------------|------------------|
-| **`/api/trigger-fivb-pipelines`** | 06:00 | **`fivb-vis-pipeline.yml`** (VIS ETL, dbt, Elo) **and** **`fivb-vw-statistics.yml`** (Volleyball World HTML → `raw.raw_vw_player_tournament_stats`) |
+| **`/api/trigger-fivb-pipelines`** | 06:00 | **`fivb-vis-pipeline.yml`** (VIS raw ETL → chained `fivb-dbt-elo-pipeline.yml`) **and** **`fivb-vw-statistics.yml`** (Volleyball World HTML → `raw.raw_vw_player_tournament_stats`) |
 
 You can still call **`/api/trigger-fivb-vis-pipeline`** or **`/api/trigger-fivb-vw-statistics`** manually to dispatch a **single** workflow.
+You can also dispatch dbt/Elo only by calling **`/api/trigger-fivb-pipelines?workflow=dbt`**.
 
 Each handler calls GitHub **`workflow_dispatch`** with your **`DATABASE_URL`** from Vercel as **`database_url`**. You do **not** need a **`DATABASE_URL`** repository secret on GitHub for that path.
 
@@ -133,6 +137,13 @@ python run_fivb_vis_pipeline.py
 ```
 
 Same behavior as the original **`scripts/run_pipeline.sh`** (incremental raw upserts, `dbt run`, Elo compute).
+
+To run only one phase:
+
+```bash
+python run_fivb_vis_raw_ingestion.py
+python run_fivb_dbt_elo_pipeline.py
+```
 
 ### Pipeline runtime tuning (optional)
 
