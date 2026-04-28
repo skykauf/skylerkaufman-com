@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shared Volley Chat</title>
+    <meta name="description" content="Shared Volley Chat conversation log" />
+    <link rel="stylesheet" href="/site-cosmic.css" />
+    <link rel="stylesheet" href="/volley-chat/volley.css" />
+  </head>
+  <body class="volley-page cosmic-site">
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <header class="volley-header">
+      <h1 class="volley-title">Shared volley chat</h1>
+      <p id="sharedTitle" class="volley-sub"></p>
+      <p id="status" class="volley-status" role="status"></p>
+    </header>
+    <main class="volley-main">
+      <section class="volley-chat-panel">
+        <div id="thread" class="volley-thread" aria-live="polite"></div>
+        <form id="composer" class="volley-composer">
+          <div class="volley-composer-input-row">
+            <label class="volley-sr" for="input">Message</label>
+            <textarea
+              id="input"
+              class="volley-input"
+              rows="2"
+              placeholder="Continue this conversation…"
+              autocomplete="off"
+            ></textarea>
+            <button type="submit" class="volley-send" id="send">Send</button>
+          </div>
+        </form>
+      </section>
+    </main>
+    <script src="/visuals.js" defer></script>
+    <script src="/volley-chat/share/share.js" defer></script>
+  </body>
+</html>

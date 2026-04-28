@@ -1,5 +1,9 @@
 const { getAuthenticatedUser } = require("../../lib/auth-supabase");
-const { getConversationForUser, deleteConversationForUser } = require("../../lib/chat-history-store");
+const {
+  getConversationForUser,
+  setConversationShareForUser,
+  deleteConversationForUser,
+} = require("../../lib/chat-history-store");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
@@ -9,8 +13,8 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "Missing conversation id." });
   }
 
-  if (req.method !== "GET" && req.method !== "DELETE") {
-    res.setHeader("Allow", "GET, DELETE");
+  if (req.method !== "GET" && req.method !== "PATCH" && req.method !== "DELETE") {
+    res.setHeader("Allow", "GET, PATCH, DELETE");
     return res.status(405).json({ error: "Method not allowed." });
   }
 
@@ -30,6 +34,23 @@ module.exports = async function handler(req, res) {
         return res.status(code).json({ error: out.error });
       }
       return res.status(200).json(out);
+    }
+
+    if (req.method === "PATCH") {
+      const isPublic = req.body?.is_public;
+      if (typeof isPublic !== "boolean") {
+        return res.status(400).json({ error: "Expected boolean `is_public`." });
+      }
+      const out = await setConversationShareForUser({
+        userId: auth.user.id,
+        conversationId,
+        isPublic,
+      });
+      if (out.error) {
+        const code = out.error === "Conversation not found." ? 404 : 500;
+        return res.status(code).json({ error: out.error });
+      }
+      return res.status(200).json({ conversation: out.conversation });
     }
 
     const del = await deleteConversationForUser({ userId: auth.user.id, conversationId });

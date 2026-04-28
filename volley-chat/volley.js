@@ -24,6 +24,8 @@
   const authStatusEl = document.getElementById("authStatus");
   const historyListEl = document.getElementById("historyList");
   const newChatBtn = document.getElementById("newChat");
+  const shareChatBtn = document.getElementById("shareChat");
+  const shareStatusEl = document.getElementById("shareStatus");
   const toolsExplorerBodyEl = document.getElementById("toolsExplorerBody");
   const starterPromptWrap = document.getElementById("starterPromptWrap");
   const starterPromptBtn = document.getElementById("starterPromptBtn");
@@ -67,6 +69,7 @@
   let activeConversationId = sessionStorage.getItem(tabKey) || null;
   let accessToken = "";
   let currentUser = null;
+  let activeConversationShare = null;
   let sessionContext = {};
   let modelLabel = "Unknown";
   let runMetrics = { modelMs: 0, toolMs: 0, toolCount: 0, startedAt: 0 };
@@ -95,6 +98,44 @@
     starterPromptWrap.hidden = history.length !== 0;
   }
 
+  function getShareUrl(token) {
+    if (!token) return "";
+    const u = new URL("/volley-chat/share/", window.location.origin);
+    u.searchParams.set("token", token);
+    return u.toString();
+  }
+
+  async function copyToClipboard(text) {
+    if (!text) return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function renderShareStatus() {
+    if (!shareChatBtn || !shareStatusEl) return;
+    if (!currentUser) {
+      shareChatBtn.disabled = true;
+      shareChatBtn.textContent = "Share chat link";
+      shareStatusEl.textContent = "Sign in to enable sharing.";
+      return;
+    }
+    if (!activeConversationId) {
+      shareChatBtn.disabled = true;
+      shareChatBtn.textContent = "Share chat link";
+      shareStatusEl.textContent = "Select a saved chat to share.";
+      return;
+    }
+    shareChatBtn.disabled = false;
+    const isPublic = !!activeConversationShare?.is_public;
+    const token = activeConversationShare?.share_token || "";
+    shareChatBtn.textContent = isPublic ? "Disable public link" : "Share chat link";
+    shareStatusEl.textContent = isPublic && token ? `Public link enabled: ${getShareUrl(token)}` : "This chat is private.";
+  }
+
   function renderHistoryList() {
     historyListEl.innerHTML = "";
     if (!currentUser) {
@@ -102,6 +143,7 @@
       empty.className = "volley-history-item-meta";
       empty.textContent = "Sign in to save and load chat history.";
       historyListEl.appendChild(empty);
+      renderShareStatus();
       return;
     }
     if (!Array.isArray(conversations) || conversations.length === 0) {
@@ -109,6 +151,7 @@
       empty.className = "volley-history-item-meta";
       empty.textContent = "No saved chats yet.";
       historyListEl.appendChild(empty);
+      renderShareStatus();
       return;
     }
     conversations.forEach((c) => {
@@ -121,7 +164,7 @@
       const meta = document.createElement("div");
       meta.className = "volley-history-item-meta";
       const when = c.updated_at ? new Date(c.updated_at).toLocaleString() : "";
-      meta.textContent = when;
+      meta.textContent = `${when}${when ? " · " : ""}${c.is_public ? "shared" : "private"}`;
       btn.appendChild(title);
       btn.appendChild(meta);
       btn.addEventListener("click", () => {
@@ -129,6 +172,7 @@
       });
       historyListEl.appendChild(btn);
     });
+    renderShareStatus();
   }
 
   function renderFromHistory() {
@@ -171,6 +215,9 @@
   async function loadConversation(id) {
     if (!id || !currentUser) return;
     const data = await apiJson(`/api/chat-history/${encodeURIComponent(id)}`);
+    activeConversationShare = data.conversation
+      ? { is_public: !!data.conversation.is_public, share_token: data.conversation.share_token || "" }
+      : null;
     const msgs = Array.isArray(data.messages) ? data.messages : [];
     history.length = 0;
     msgs.forEach((m) => {
@@ -192,10 +239,40 @@
     clearToolActivity();
     clearThread();
     activeConversationId = null;
+    activeConversationShare = null;
     sessionStorage.removeItem(tabKey);
     renderHistoryList();
     setStatus(currentUser ? "New saved chat will start on your next message." : "Guest chat reset.");
     updateStarterPromptVisibility();
+  }
+
+  async function toggleShareActiveConversation() {
+    if (!currentUser) {
+      setStatus("Sign in first to share chats.");
+      return;
+    }
+    if (!activeConversationId) {
+      setStatus("Open a saved chat first.");
+      return;
+    }
+    const nextPublic = !activeConversationShare?.is_public;
+    const data = await apiJson(`/api/chat-history/${encodeURIComponent(activeConversationId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_public: nextPublic }),
+    });
+    const c = data?.conversation || null;
+    activeConversationShare = c
+      ? { is_public: !!c.is_public, share_token: c.share_token || "" }
+      : { is_public: nextPublic, share_token: "" };
+    await refreshConversations();
+    if (nextPublic && activeConversationShare.share_token) {
+      const url = getShareUrl(activeConversationShare.share_token);
+      const copied = await copyToClipboard(url);
+      setStatus(copied ? "Public chat link copied." : `Public chat link: ${url}`);
+    } else {
+      setStatus("Public chat link disabled.");
+    }
   }
 
   function setAuthUi() {
@@ -543,6 +620,14 @@
     startNewChat();
   });
 
+  if (shareChatBtn) {
+    shareChatBtn.addEventListener("click", () => {
+      toggleShareActiveConversation().catch((e) => {
+        setStatus(e.message || "Could not update sharing.");
+      });
+    });
+  }
+
   async function initAuth() {
     try {
       const cfgRes = await fetch("/api/auth-config", { method: "GET" });
@@ -586,6 +671,7 @@
       accessToken = "";
       conversations = [];
       activeConversationId = null;
+      activeConversationShare = null;
       sessionStorage.removeItem(tabKey);
       startNewChat();
       setAuthUi();
@@ -595,6 +681,7 @@
     supabase.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
       accessToken = session?.access_token || "";
+      if (!currentUser) activeConversationShare = null;
       setAuthUi();
       if (currentUser) {
         refreshConversations().then(async () => {
@@ -615,6 +702,7 @@
     supabase.auth.getSession().then(({ data }) => {
       currentUser = data?.session?.user || null;
       accessToken = data?.session?.access_token || "";
+      if (!currentUser) activeConversationShare = null;
       setAuthUi();
       if (currentUser) {
         refreshConversations().then(async () => {

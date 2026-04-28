@@ -345,6 +345,15 @@ body.volley-page {
 
 .volley-history-actions {
   padding: 0.45rem 0.65rem 0;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.volley-history-share-status {
+  padding: 0.35rem 0.65rem 0;
+  font-size: 0.68rem;
+  color: var(--muted);
 }
 
 .volley-history-list {

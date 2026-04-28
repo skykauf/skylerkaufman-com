@@ -10,6 +10,8 @@ const {
   appendConversationMessages,
   listConversationsForUser,
   getConversationForUser,
+  setConversationShareForUser,
+  getConversationByShareToken,
   deleteConversationForUser,
 } = require("./lib/chat-history-store");
 
@@ -256,6 +258,30 @@ app.get("/api/chat-history/:id", async (req, res) => {
   }
 });
 
+app.patch("/api/chat-history/:id", async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  const auth = await getAuthenticatedUser(req);
+  if (auth.error) return res.status(401).json({ error: auth.error, detail: auth.detail || null });
+  if (!auth.user) return res.status(401).json({ error: "Authentication required." });
+  const isPublic = req.body?.is_public;
+  if (typeof isPublic !== "boolean") {
+    return res.status(400).json({ error: "Expected boolean `is_public`." });
+  }
+  try {
+    const out = await setConversationShareForUser({
+      userId: auth.user.id,
+      conversationId: req.params.id,
+      isPublic,
+    });
+    if (out.error) return res.status(out.error === "Conversation not found." ? 404 : 500).json({ error: out.error });
+    return res.status(200).json({ conversation: out.conversation });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ error: "Failed to update conversation sharing.", detail: err.message || String(err) });
+  }
+});
+
 app.delete("/api/chat-history/:id", async (req, res) => {
   res.setHeader("Cache-Control", "private, no-store");
   const auth = await getAuthenticatedUser(req);
@@ -269,6 +295,19 @@ app.delete("/api/chat-history/:id", async (req, res) => {
     return res
       .status(500)
       .json({ error: "Failed to delete conversation.", detail: err.message || String(err) });
+  }
+});
+
+app.get("/api/chat-history/public/:token", async (req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
+  try {
+    const out = await getConversationByShareToken(req.params.token);
+    if (out.error) return res.status(out.error === "Conversation not found." ? 404 : 500).json({ error: out.error });
+    return res.status(200).json(out);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ error: "Failed to load shared conversation.", detail: err.message || String(err) });
   }
 });
 
