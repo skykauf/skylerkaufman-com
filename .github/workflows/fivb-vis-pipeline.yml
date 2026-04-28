@@ -67,5 +67,5 @@ jobs:
     needs: raw
     uses: ./.github/workflows/fivb-dbt-elo-pipeline.yml
     with:
-      database_url: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+      database_url: ${{ github.event.inputs.database_url }}
     secrets: inherit
