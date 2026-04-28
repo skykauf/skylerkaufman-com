@@ -157,6 +157,49 @@ models:
       - name: ingested_at
         description: "Latest ingested_at among champion rows for this tournament."
 
+  - name: stg_vw_player_tournament_stats
+    description: >
+      Volleyball World BPT player statistics (raw_vw_player_tournament_stats) with heuristic links to
+      stg_fivb_tournaments and stg_fivb_events. VIS does not expose VW URLs; matching uses BPT season
+      from event_key, bucket→tier (challenge/elite16/future), place token vs last word of tournament
+      name, and men/women from stat_url. vis_tournament_id is null when there are zero or multiple
+      candidate tournaments (see vw_vis_candidate_count).
+    columns:
+      - name: event_key
+        description: "Path prefix on en.volleyballworld.com up to /statistics (tournament hub)."
+      - name: stat_url
+        description: "Canonical statistics subpage URL (men or women best-* category)."
+      - name: vw_player_id
+        description: "Volleyball World player id from HTML data-player-no."
+      - name: display_rank
+      - name: player_name
+      - name: federation
+      - name: metrics
+      - name: ingested_at
+      - name: vw_bpt_season
+        description: "BPT season year parsed from event_key (beach-pro-tour/YYYY/ or beach-pro-tour-YYYY/)."
+      - name: vw_bpt_bucket
+        description: "challenge | elite16 | future from URL path."
+      - name: vw_place_slug
+        description: "Lowercased slug segment after the bucket (e.g. baden-aut, gstaad-sui)."
+      - name: vw_place_token
+        description: "First hyphen-separated segment of vw_place_slug; matched to last word of VIS tournament name."
+      - name: vw_expected_tier
+        description: "VIS tier inferred from bucket (52/51/53 for challenge/elite16/future)."
+      - name: vw_stat_gender_code
+        description: "0 = men page, 1 = women page (VIS Gender field on tournaments)."
+      - name: vis_tournament_id
+        description: "Matched stg_fivb_tournaments.tournament_id when vw_vis_candidate_count = 1; else null."
+      - name: vw_vis_candidate_count
+        description: "Number of VIS tournament rows matching season/tier/gender/name heuristic for this stat_url."
+      - name: vis_tournament_name
+      - name: vis_no_event
+        description: "VIS NoEvent from tournament payload (parent event id), when present."
+      - name: vis_event_id
+        description: "stg_fivb_events.event_id via NoEvent join."
+      - name: vis_event_code
+      - name: vis_event_name
+
   - name: stg_fivb_team_rankings
     description: "World Tour and Olympic selection rankings (M/W) – staging from raw.raw_fivb_team_rankings"
     columns:
@@ -179,3 +222,61 @@ models:
               - snapshot_date
               - gender
               - position
+
+  - name: stg_fivb_player_entry_points
+    description: >
+      Current athlete entry/seeding points as of current_date using FIVB-style best-3-of-last-4
+      in a trailing 365-day window. Base score uses Beach Pro Tour (Elite/Challenge/Future) plus
+      Senior World Championships; other sanctioned tournaments are included only when they improve
+      the athlete's score. Technical points are the 365-day sum used as first tie-break support.
+    columns:
+      - name: as_of_date
+        description: "Calculation date (current_date)."
+      - name: player_id
+        description: "VIS player number."
+        tests:
+          - unique
+          - not_null
+      - name: player_name
+      - name: country_code
+      - name: gender
+      - name: technical_points_365d
+        description: "Sum of tournament ranking points earned in the trailing 365 days (tie-break helper)."
+      - name: base_best_three_points
+        description: "Best 3 points out of the most recent 4 base events (Elite/Challenge/Future + Senior Worlds)."
+      - name: all_events_best_three_points
+        description: "Best 3 points out of the most recent 4 events across all sanctioned events in scope."
+      - name: entry_seeding_points
+        description: "Final athlete entry/seeding points: greatest(base_best_three_points, all_events_best_three_points)."
+      - name: includes_other_events_for_improvement
+        description: "True when non-base events increase the final entry/seeding points."
+      - name: base_events_in_365d
+        description: "Count of base events in the trailing 365-day window."
+      - name: all_events_in_365d
+        description: "Count of all scored events in the trailing 365-day window."
+
+  - name: stg_fivb_team_entry_points
+    description: >
+      Current team entry/seeding points as of current_date, computed as the sum of the two athletes'
+      entry_seeding_points from stg_fivb_player_entry_points. Includes summed technical points for
+      tie-break support at team level.
+    columns:
+      - name: as_of_date
+        description: "Calculation date inherited from stg_fivb_player_entry_points (current_date)."
+      - name: team_id
+        description: "VIS team number."
+        tests:
+          - unique
+          - not_null
+      - name: tournament_id
+      - name: player_a_id
+      - name: player_b_id
+      - name: country_code
+      - name: player_a_entry_seeding_points
+      - name: player_b_entry_seeding_points
+      - name: team_entry_seeding_points
+        description: "Final team entry/seeding points = player_a_entry_seeding_points + player_b_entry_seeding_points."
+      - name: player_a_technical_points_365d
+      - name: player_b_technical_points_365d
+      - name: team_technical_points_365d
+        description: "Team tie-break helper = sum of athlete technical_points_365d."
