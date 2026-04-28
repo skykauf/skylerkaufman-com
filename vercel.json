@@ -1,4 +1,14 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/trigger-fivb-vis-pipeline",
+      "destination": "/api/trigger-fivb-pipelines?workflow=vis"
+    },
+    {
+      "source": "/api/trigger-fivb-vw-statistics",
+      "destination": "/api/trigger-fivb-pipelines?workflow=vw"
+    }
+  ],
   "crons": [
     {
       "path": "/api/trigger-fivb-pipelines",

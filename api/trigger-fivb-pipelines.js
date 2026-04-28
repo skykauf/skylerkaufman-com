@@ -20,18 +20,26 @@ module.exports = async function handler(req, res) {
     }
     const { ctx } = auth;
     const inputs = { database_url: ctx.databaseUrl };
+    const rawWorkflow = String(req.query?.workflow || "").toLowerCase();
+    const workflow = rawWorkflow === "vis" || rawWorkflow === "vw" ? rawWorkflow : "both";
 
+    const runVis = workflow === "vis" || workflow === "both";
+    const runVw = workflow === "vw" || workflow === "both";
     const [vis, vw] = await Promise.all([
-      githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-vis-pipeline.yml", {
-        ref: ctx.ref,
-        pat: ctx.pat,
-        inputs,
-      }),
-      githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-vw-statistics.yml", {
-        ref: ctx.ref,
-        pat: ctx.pat,
-        inputs,
-      }),
+      runVis
+        ? githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-vis-pipeline.yml", {
+            ref: ctx.ref,
+            pat: ctx.pat,
+            inputs,
+          })
+        : Promise.resolve({ ok: true, status: 0, detail: "skipped" }),
+      runVw
+        ? githubDispatchWorkflow(ctx.owner, ctx.repoName, "fivb-vw-statistics.yml", {
+            ref: ctx.ref,
+            pat: ctx.pat,
+            inputs,
+          })
+        : Promise.resolve({ ok: true, status: 0, detail: "skipped" }),
     ]);
 
     const visOk = vis.ok;
@@ -50,14 +58,21 @@ module.exports = async function handler(req, res) {
     }
 
     if (visOk && vwOk) {
+      const message =
+        workflow === "vis"
+          ? "FIVB VIS workflow dispatched."
+          : workflow === "vw"
+            ? "FIVB VW statistics workflow dispatched."
+            : "Both FIVB workflows dispatched (VIS + Volleyball World statistics on GitHub).";
       return res.status(202).json({
         ok: true,
-        message: "Both FIVB workflows dispatched (VIS + Volleyball World statistics on GitHub).",
+        message,
+        workflow,
         ref: ctx.ref,
         repo: `${ctx.owner}/${ctx.repoName}`,
         dispatches: {
-          fivb_vis_pipeline: { ok: true },
-          fivb_vw_statistics: { ok: true },
+          fivb_vis_pipeline: runVis ? { ok: true } : { ok: true, skipped: true },
+          fivb_vw_statistics: runVw ? { ok: true } : { ok: true, skipped: true },
         },
       });
     }
@@ -65,13 +80,18 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({
       ok: false,
       error: "One or both workflow dispatches failed.",
+      workflow,
       ref: ctx.ref,
       repo: `${ctx.owner}/${ctx.repoName}`,
       dispatches: {
-        fivb_vis_pipeline: visOk
+        fivb_vis_pipeline: !runVis
+          ? { ok: true, skipped: true }
+          : visOk
           ? { ok: true }
           : { ok: false, status: vis.status, detail: vis.detail.slice(0, 2000) },
-        fivb_vw_statistics: vwOk
+        fivb_vw_statistics: !runVw
+          ? { ok: true, skipped: true }
+          : vwOk
           ? { ok: true }
           : { ok: false, status: vw.status, detail: vw.detail.slice(0, 2000) },
       },
