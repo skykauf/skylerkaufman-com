@@ -3,16 +3,18 @@
 # transforms can also be run standalone without raw retrieval.
 # Volleyball World HTML statistics remains separate: fivb-vw-statistics.yml.
 #
-# Optional: set repository secret DATABASE_URL and run from Actions UI without
-# pasting the URL, or re-add a schedule block that uses the secret only.
+# Daily schedule: 06:00 UTC (same window as the former Vercel cron).
+# Requires repository secret DATABASE_URL (Supabase direct / non-pooling URI).
 
 name: FIVB VIS raw pipeline (Supabase)
 
 on:
+  schedule:
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       database_url:
-        description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
+        description: "Postgres URL (optional; defaults to repository secret DATABASE_URL)"
         required: false
         type: string
 
@@ -46,7 +48,7 @@ jobs:
       - name: Require DATABASE_URL
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::No DATABASE_URL. Use the Vercel trigger (passes workflow input), or set repository secret DATABASE_URL and run workflow_dispatch with an empty input."
+            echo "::error::No DATABASE_URL. Set repository secret DATABASE_URL or pass database_url workflow input."
             exit 1
           fi
 

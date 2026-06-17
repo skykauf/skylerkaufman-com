@@ -8,11 +8,5 @@
       "source": "/api/trigger-fivb-vw-statistics",
       "destination": "/api/trigger-fivb-pipelines?workflow=vw"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/trigger-fivb-pipelines",
-      "schedule": "0 6 * * *"
-    }
   ]
 }

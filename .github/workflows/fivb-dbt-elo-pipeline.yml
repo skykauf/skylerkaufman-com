@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       database_url:
-        description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
+        description: "Postgres URL (optional; defaults to repository secret DATABASE_URL)"
         required: false
         type: string
   workflow_call:
@@ -41,7 +41,7 @@ jobs:
       - name: Require DATABASE_URL
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::No DATABASE_URL. Use the Vercel trigger (passes workflow input), or set repository secret DATABASE_URL and run workflow_dispatch with an empty input."
+            echo "::error::No DATABASE_URL. Set repository secret DATABASE_URL or pass database_url workflow input."
             exit 1
           fi
 

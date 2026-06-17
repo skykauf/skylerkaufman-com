@@ -1,14 +1,16 @@
 # Volleyball World BPT statistics only (HTML from sitemap → raw.raw_vw_player_tournament_stats).
 # Isolated from the VIS/dbt/Elo pipeline so scraper or HTML changes do not fail the main job.
-# Vercel daily cron: /api/trigger-fivb-pipelines (also /api/trigger-fivb-vw-statistics for VW-only).
+# Daily schedule: 06:00 UTC (same window as the former Vercel cron).
 
 name: FIVB VW statistics (Supabase)
 
 on:
+  schedule:
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       database_url:
-        description: "Postgres URL (Vercel trigger passes DATABASE_URL; or leave empty if repo secret is set)"
+        description: "Postgres URL (optional; defaults to repository secret DATABASE_URL)"
         required: false
         type: string
 
@@ -38,7 +40,7 @@ jobs:
       - name: Require DATABASE_URL
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::No DATABASE_URL. Use the Vercel trigger, or set repository secret DATABASE_URL."
+            echo "::error::No DATABASE_URL. Set repository secret DATABASE_URL or pass database_url workflow input."
             exit 1
           fi
 
