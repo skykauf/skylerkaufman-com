@@ -883,8 +883,13 @@ def run_full_ingestion(limits: IngestionLimits | None = None) -> None:
     to_process = tournaments
     if limits.tournaments is not None and limits.tournaments > 0:
         to_process = tournaments[: limits.tournaments]
-    # Only expand (results/rounds) for tournaments from 2015 onwards
-    MIN_EXPAND_YEAR = 2015
+    # Only expand (results/rounds) for tournaments from MIN_EXPAND_YEAR onwards.
+    # Override with ETL_MIN_YEAR (e.g. 2020) to keep free-tier Supabase under ~500MB.
+    min_year_env = os.environ.get("ETL_MIN_YEAR", "").strip()
+    try:
+        MIN_EXPAND_YEAR = int(min_year_env) if min_year_env else 2015
+    except ValueError:
+        MIN_EXPAND_YEAR = 2015
     tournament_ids = []
     today = date.today()
     for t in to_process:

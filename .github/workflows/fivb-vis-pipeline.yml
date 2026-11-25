@@ -34,6 +34,8 @@ jobs:
       ETL_EVENTS_REFRESH_HOURS: "168"
       ETL_TEAMS_REFRESH_HOURS: "72"
       ETL_PLAYERS_REFRESH_HOURS: "168"
+      # Keep free-tier Supabase (~500MB) viable; raise to go further back.
+      ETL_MIN_YEAR: "2020"
     defaults:
       run:
         working-directory: fivb-pipeline
