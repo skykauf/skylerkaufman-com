@@ -1,4 +1,5 @@
 {
+  "trailingSlash": true,
   "redirects": [
     {
       "source": "/volley-chat",
@@ -6,8 +7,13 @@
       "permanent": true
     },
     {
-      "source": "/volley-chat/:path*",
-      "destination": "https://volleyball.skylerkaufman.com/volley-chat/:path*",
+      "source": "/volley-chat/",
+      "destination": "https://volleyball.skylerkaufman.com/volley-chat/",
+      "permanent": true
+    },
+    {
+      "source": "/volley-chat/:path+",
+      "destination": "https://volleyball.skylerkaufman.com/volley-chat/:path+",
       "permanent": true
     },
     {
@@ -16,8 +22,13 @@
       "permanent": true
     },
     {
-      "source": "/fivb-explorer/:path*",
-      "destination": "https://volleyball.skylerkaufman.com/fivb-explorer/:path*",
+      "source": "/fivb-explorer/",
+      "destination": "https://volleyball.skylerkaufman.com/fivb-explorer/",
+      "permanent": true
+    },
+    {
+      "source": "/fivb-explorer/:path+",
+      "destination": "https://volleyball.skylerkaufman.com/fivb-explorer/:path+",
       "permanent": true
     },
     {
@@ -26,8 +37,13 @@
       "permanent": true
     },
     {
-      "source": "/math-meteor/:path*",
-      "destination": "https://volleyball.skylerkaufman.com/math-meteor/:path*",
+      "source": "/math-meteor/",
+      "destination": "https://volleyball.skylerkaufman.com/math-meteor/",
+      "permanent": true
+    },
+    {
+      "source": "/math-meteor/:path+",
+      "destination": "https://volleyball.skylerkaufman.com/math-meteor/:path+",
       "permanent": true
     },
     {
@@ -36,8 +52,13 @@
       "permanent": true
     },
     {
-      "source": "/model-math-hub/:path*",
-      "destination": "https://volleyball.skylerkaufman.com/model-math-hub/:path*",
+      "source": "/model-math-hub/",
+      "destination": "https://volleyball.skylerkaufman.com/model-math-hub/",
+      "permanent": true
+    },
+    {
+      "source": "/model-math-hub/:path+",
+      "destination": "https://volleyball.skylerkaufman.com/model-math-hub/:path+",
       "permanent": true
     },
     {
