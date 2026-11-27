@@ -61,8 +61,18 @@
       "permanent": true
     },
     {
-      "source": "/api/:path*",
-      "destination": "https://volleyball.skylerkaufman.com/api/:path*",
+      "source": "/api",
+      "destination": "https://volleyball.skylerkaufman.com/api",
+      "permanent": true
+    },
+    {
+      "source": "/api/",
+      "destination": "https://volleyball.skylerkaufman.com/api/",
+      "permanent": true
+    },
+    {
+      "source": "/api/:path+",
+      "destination": "https://volleyball.skylerkaufman.com/api/:path+",
       "permanent": true
     }
   ]
