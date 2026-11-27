@@ -154,8 +154,8 @@
       core: [70, 95, 118],
       edge: [28, 42, 52],
       rim: [130, 165, 188],
-      href: "/volley-chat/",
-      label: "Volley Chat",
+      href: "https://volleyball.skylerkaufman.com/",
+      label: "Volleyball",
     });
     planets.push({
       relX: small ? 0.2 : 0.18,
@@ -167,8 +167,8 @@
       core: [90, 135, 122],
       edge: [36, 62, 56],
       rim: [145, 198, 182],
-      href: "/fivb-explorer/",
-      label: "Beach Explorer",
+      href: "https://health.skylerkaufman.com/",
+      label: "Health",
     });
     planets.push({
       relX: small ? 0.78 : 0.62,
@@ -180,21 +180,8 @@
       core: [106, 116, 180],
       edge: [48, 56, 92],
       rim: [162, 174, 228],
-      href: "/fivb-explorer/matchup-predictor/",
-      label: "Matchup Predictor",
-    });
-    planets.push({
-      relX: 0.72,
-      relY: 0.78,
-      r: s * (small ? 0.028 : 0.034),
-      drift: s * 0.015,
-      phase: 2.4,
-      ring: false,
-      core: [180, 140, 95],
-      edge: [72, 52, 36],
-      rim: [235, 200, 155],
-      href: "/math-meteor/",
-      label: "Math Meteor",
+      href: "https://travel.skylerkaufman.com/",
+      label: "Travel",
     });
     if (!small) {
       planets.push({

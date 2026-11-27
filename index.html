@@ -4,7 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SkylerKaufman.com</title>
-    <meta name="description" content="SkylerKaufman.com — personal site" />
+    <meta
+      name="description"
+      content="Skyler Kaufman — projects across volleyball, health, and travel."
+    />
     <link rel="stylesheet" href="/site-cosmic.css" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -13,33 +16,22 @@
     <main class="wrap">
       <p class="eyebrow" lang="es">Bienvenidos</p>
       <h1>SkylerKaufman.com</h1>
-      <p class="lede">
-        This site is just getting started. More soon.
-      </p>
-      <ul class="planet-guide" aria-label="Site areas">
+      <p class="lede">A few corners of the internet.</p>
+      <ul class="planet-guide" aria-label="Sites">
         <li>
-          <a href="/volley-chat/">Volley Chat</a>
-          <span class="planet-guide__hint"> — AI chat with FIVB tools</span>
+          <a href="https://volleyball.skylerkaufman.com/">Volleyball</a>
+          <span class="planet-guide__hint"> — chat, explorer, ratings</span>
         </li>
         <li>
-          <a href="/fivb-explorer/">Beach Explorer</a>
-          <span class="planet-guide__hint"> — data freshness &amp; tables</span>
+          <a href="https://health.skylerkaufman.com/">Health</a>
+          <span class="planet-guide__hint"> — metrics dashboard</span>
         </li>
         <li>
-          <a href="/fivb-explorer/matchup-predictor/">Matchup Predictor</a>
-          <span class="planet-guide__hint"> — win odds &amp; score spread</span>
-        </li>
-        <li>
-          <a href="/math-meteor/">Math Meteor</a>
-          <span class="planet-guide__hint"> — how the ratings math works</span>
+          <a href="https://travel.skylerkaufman.com/">Travel</a>
+          <span class="planet-guide__hint"> — year on a map</span>
         </li>
       </ul>
     </main>
     <script src="/visuals.js" defer></script>
-    <script>
-      fetch("/api/bootstrap-supabase", { method: "GET", credentials: "same-origin" }).catch(
-        function () {}
-      );
-    </script>
   </body>
 </html>

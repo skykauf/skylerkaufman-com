@@ -1,15 +1,8 @@
 {
   "name": "skylerkaufman-com",
   "private": true,
-  "engines": {
-    "node": ">=18"
-  },
+  "description": "Apex hub for skylerkaufman.com — links out to project subdomains",
   "scripts": {
-    "start": "node server.js",
-    "verify": "node -e \"require('./lib/chat-service'); require('./lib/bootstrap-supabase'); require('./lib/fivb-profile'); require('./lib/fivb-table-explorer'); require('./lib/auth-supabase'); require('./lib/chat-history-store'); require('./lib/fivb-github-dispatch'); console.log('verify: ok')\""
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "pg": "^8.13.1"
+    "start": "npx --yes serve -l 3000 ."
   }
 }

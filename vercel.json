@@ -1,12 +1,49 @@
 {
-  "rewrites": [
+  "redirects": [
     {
-      "source": "/api/trigger-fivb-vis-pipeline",
-      "destination": "/api/trigger-fivb-pipelines?workflow=vis"
+      "source": "/volley-chat",
+      "destination": "https://volleyball.skylerkaufman.com/volley-chat/",
+      "permanent": true
     },
     {
-      "source": "/api/trigger-fivb-vw-statistics",
-      "destination": "/api/trigger-fivb-pipelines?workflow=vw"
+      "source": "/volley-chat/:path*",
+      "destination": "https://volleyball.skylerkaufman.com/volley-chat/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/fivb-explorer",
+      "destination": "https://volleyball.skylerkaufman.com/fivb-explorer/",
+      "permanent": true
+    },
+    {
+      "source": "/fivb-explorer/:path*",
+      "destination": "https://volleyball.skylerkaufman.com/fivb-explorer/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/math-meteor",
+      "destination": "https://volleyball.skylerkaufman.com/math-meteor/",
+      "permanent": true
+    },
+    {
+      "source": "/math-meteor/:path*",
+      "destination": "https://volleyball.skylerkaufman.com/math-meteor/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/model-math-hub",
+      "destination": "https://volleyball.skylerkaufman.com/model-math-hub/",
+      "permanent": true
+    },
+    {
+      "source": "/model-math-hub/:path*",
+      "destination": "https://volleyball.skylerkaufman.com/model-math-hub/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://volleyball.skylerkaufman.com/api/:path*",
+      "permanent": true
     }
   ]
 }
